@@ -27,9 +27,9 @@ The original PNG/PBR combining workflow remains available. See [added features a
 4. Click **Merge Selected + DDS Atlas**, choose a new lowercase DDS filename and select sizes, formats, UV layout and shader.
 5. Export the resulting Drawable through Sollumz.
 
-DDS generation uses Blender's bundled NumPy. No Pillow or external DDS converter is required for the GTA workflow. Pillow is used only by the legacy PNG workflow.
+DDS generation uses Blender's bundled NumPy. No external DDS converter is required for the GTA workflow.
 
-Version 2.6.3 simplifies the panels: credits show Exodus (original by shotariya), donation/Discord/Pillow installer controls are removed, and update checks use stable releases from this repository.
+Version 2.6.3 simplifies the panels: Donation/Discord/Pillow installer controls are removed, and update checks use stable releases from this repository.
 
 ## Output and limits
 
@@ -40,8 +40,6 @@ The merge creates `name.dds`, optional `name_normal.dds`, and one merged model w
 DXT5 is lossy. Specular, roughness, metallic, emission, shape keys, multiple populated LODs and specialized GTA shader behavior are outside this merge workflow. CodeWalker XML export has been tested; actual GTA V rendering and native binary YDR/YTD export have not been verified. See [validation](docs/VALIDATION.md).
 
 ## Development
-
-Source is ordinary Blender add-on Python. For standalone DDS regression checks, install NumPy and Pillow and run `python tests/test_dds.py`. To build an installation ZIP from a Git checkout, run `python tools/build_release.py`; the archive is written to `dist/`.
 
 Report problems through [Issues](https://github.com/Exodus2597/material-combiner-gta/issues), including Blender/Sollumz/add-on versions and the selected atlas settings. Do not upload private or unlicensed source assets.
 
