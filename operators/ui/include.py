@@ -10,7 +10,6 @@ import bpy
 from ... import globs
 from ...icons import get_icon_id
 from ...type_annotations import Scene
-from ...ui.main_panel import MaterialCombinerPanel
 
 
 def draw_ui(context: bpy.types.Context, m_col: bpy.types.UILayout) -> None:
@@ -22,12 +21,6 @@ def draw_ui(context: bpy.types.Context, m_col: bpy.types.UILayout) -> None:
     """
     if globs.pil_available:
         _materials_list(context.scene, m_col)
-    elif globs.pil_install_attempted:
-        col = m_col.box().column()
-        col.label(text="Installation complete", icon_value=get_icon_id("done"))
-        col.label(text="Please restart Blender", icon_value=get_icon_id("null"))
-    else:
-        MaterialCombinerPanel.draw_pillow_installer(context, m_col)
 
 
 def _materials_list(scn: Scene, m_col: bpy.types.UILayout) -> None:
@@ -40,9 +33,6 @@ def _materials_list(scn: Scene, m_col: bpy.types.UILayout) -> None:
         scn: Current Blender scene.
         m_col: UILayout to draw the material list in.
     """
-    patreon = "https://www.patreon.com/shotariya"
-    buymeacoffee = "https://buymeacoffee.com/shotariya"
-
     if scn.smc_ob_data:
         m_col.template_list(
             "SMC_UL_Combine_List",
@@ -68,14 +58,3 @@ def _materials_list(scn: Scene, m_col: bpy.types.UILayout) -> None:
     col.operator(
         "smc.combiner", text="Save Atlas to..", icon_value=get_icon_id("null")
     ).cats = True
-    col.separator()
-    col = m_col.column()
-    col.label(text="If this saved you time:")
-    col.operator(
-        "smc.browser",
-        text="Support Material Combiner",
-        icon_value=get_icon_id("patreon"),
-    ).link = patreon
-    col.operator(
-        "smc.browser", text="Buy Me a Coffee", icon_value=get_icon_id("bmc")
-    ).link = buymeacoffee

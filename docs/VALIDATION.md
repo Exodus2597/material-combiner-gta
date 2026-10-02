@@ -4,6 +4,8 @@ Environment: Blender 5.2.1 LTS (`9e2066aef7ef`), Sollumz 2.9.0, its matching pur
 
 ## Passed
 
+- Version 2.6.3: packaged registration/unregistration and panel drawing pass in Blender 5.2.1 without Pillow. Credits show Exodus (original by shotariya); only the repository issue button remains. Main and embedded panels contain no installer/donation/Discord controls. Release checks use this repository's version tags, sort versions and exclude drafts/prereleases. Simulated newer/equal releases, empty/malformed responses and timeout handling pass. Before publication, live GitHub checks detected public 2.6.2 from 2.6.1 and correctly reported the newer local 2.6.3 build as up to date.
+
 - Version 2.6.2 publishes repository documentation, retains upstream licensing materials and points help/issues/manual update notices at Exodus2597/material-combiner-gta. Packaged Blender registration validates the new version and updater configuration.
 
 - Version 2.6.1 removes all vertex groups and per-vertex weights from the merged output after joining. Static meshes with empty/weighted groups, multiple rigged meshes and the actual supplied GLB pass. Source group names and every GLB vertex weight remain unchanged; source armatures remain intact. Saved example reopens with no output groups or weights.

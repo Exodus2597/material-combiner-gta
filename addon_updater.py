@@ -662,12 +662,7 @@ class SingletonUpdater(object):
     def get_raw(self, url):
         # print("Raw request:", url)
         request = urllib.request.Request(url)
-        try:
-            context = ssl._create_unverified_context()
-        except AttributeError:
-            # some blender packaged python versions don't have this, largely
-            # useful for local network setups otherwise minimal impact
-            context = None
+        context = ssl.create_default_context()
 
         # setup private request headers if appropriate
         if self._engine.token is not None:
@@ -679,10 +674,7 @@ class SingletonUpdater(object):
 
         # run the request
         try:
-            if context:
-                result = urllib.request.urlopen(request, context=context)
-            else:
-                result = urllib.request.urlopen(request)
+            result = urllib.request.urlopen(request, context=context, timeout=DEFAULT_TIMEOUT)
         except urllib.error.HTTPError as e:
             if str(e.code) == "403":
                 self._error = "HTTP error (access denied)"
@@ -703,6 +695,11 @@ class SingletonUpdater(object):
                 self._error = "URL error, check internet connection"
                 self._error_msg = reason
                 print(self._error, self._error_msg)
+            self._update_ready = None
+            return None
+        except TimeoutError:
+            self._error = "Update check timed out"
+            self._error_msg = "Try checking again when the connection is available"
             self._update_ready = None
             return None
         else:
@@ -1703,9 +1700,24 @@ class GithubEngine(object):
     def form_branch_url(self, branch, updater):
         return "{}{}{}".format(self.form_repo_url(updater), "/zipball/", branch)
 
-    def parse_tags(self, response, _):
+    def parse_tags(self, response, updater):
         if response is None:
             return []
+        if not isinstance(response, list):
+            updater._error = "Invalid GitHub response"
+            updater._error_msg = "Expected a list of releases or tags"
+            return []
+        if updater.use_releases:
+            # Release titles are arbitrary; only version tags identify updates.
+            releases = [dict(release, name=release["tag_name"])
+                        for release in response
+                        if isinstance(release, dict)
+                        and isinstance(release.get("tag_name"), str) and release["tag_name"]
+                        and isinstance(release.get("zipball_url"), str) and release["zipball_url"]
+                        and not release.get("draft") and not release.get("prerelease")]
+            return sorted(releases,
+                          key=lambda release: updater.version_tuple_from_text(release["name"]),
+                          reverse=True)
         return response
 
 

@@ -2,7 +2,7 @@
 
 This module provides a panel in the Blender UI that shows information about
 the Material Combiner addon, including version, author credits, and links
-for reporting issues or supporting development.
+for reporting issues.
 """
 
 import bpy
@@ -10,10 +10,7 @@ import bpy
 from .. import bl_info, globs
 from ..icons import get_icon_id
 
-DISCORD_URL = "https://discordapp.com/users/275608234595713024"
 GITHUB_ISSUES_URL = "https://github.com/Exodus2597/material-combiner-gta/issues"
-PATREON_URL = "https://www.patreon.com/shotariya"
-BUYMEACOFFEE_URL = "https://buymeacoffee.com/shotariya"
 
 
 class CreditsPanel(bpy.types.Panel):
@@ -39,7 +36,6 @@ class CreditsPanel(bpy.types.Panel):
         layout = self.layout
         self._draw_header_section(layout)
         self._draw_contact_section(layout)
-        self._draw_support_section(layout)
 
     @staticmethod
     def _draw_header_section(layout: bpy.types.UILayout) -> None:
@@ -62,7 +58,8 @@ class CreditsPanel(bpy.types.Panel):
         author_row.scale_y = 1.2
         author_row.alignment = "LEFT"
         author_row.label(text="Created by:")
-        author_row.label(text="shotariya", icon_value=get_icon_id("shot"))
+        author_row.label(text="Exodus")
+        box.label(text="(original by shotariya)")
 
     def _draw_contact_section(self, layout: bpy.types.UILayout) -> None:
         """Draw the contact section with issue reporting links.
@@ -77,33 +74,9 @@ class CreditsPanel(bpy.types.Panel):
         col.label(text="Found an Issue?")
         self._create_link_button(
             col,
-            text="Contact on Discord (@shotariya)",
-            icon="discord",
-            url=DISCORD_URL,
-        )
-        self._create_link_button(
-            col,
             text="Report Bug on GitHub",
             icon="github",
             url=GITHUB_ISSUES_URL,
-        )
-
-    def _draw_support_section(self, layout: bpy.types.UILayout) -> None:
-        """Draw the support section with financial support links.
-
-        Args:
-            layout: The layout to draw the section in.
-        """
-        box = layout.box()
-        col = box.column(align=True)
-        col.scale_y = 1.2
-
-        col.label(text="Support Development:")
-        self._create_link_button(
-            col, text="Patreon Support", icon="patreon", url=PATREON_URL
-        )
-        self._create_link_button(
-            col, text="Buy Me a Coffee", icon="bmc", url=BUYMEACOFFEE_URL
         )
 
     @staticmethod

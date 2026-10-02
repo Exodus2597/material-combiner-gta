@@ -22,12 +22,14 @@ The original PNG/PBR combining workflow remains available. See [added features a
 ## Quick start
 
 1. Enable Sollumz and disable previous Material Combiner editions.
-2. Download the release asset **`material_combiner_gta_2_6_2.zip`**. Install it through **Edit → Preferences → Add-ons → Install from Disk** and enable **Shotariya's Material Combiner**.
+2. Download the release installation ZIP. Install it through **Edit → Preferences → Add-ons → Install from Disk** and enable **Shotariya's Material Combiner**.
 3. Open **N → MatCombiner → Import GLB + Textures** to import a model and its maps, or select existing mesh objects in Object Mode.
 4. Click **Merge Selected + DDS Atlas**, choose a new lowercase DDS filename and select sizes, formats, UV layout and shader.
 5. Export the resulting Drawable through Sollumz.
 
 DDS generation uses Blender's bundled NumPy. No Pillow or external DDS converter is required for the GTA workflow. Pillow is used only by the legacy PNG workflow.
+
+Version 2.6.3 simplifies the panels: credits show Exodus (original by shotariya), donation/Discord/Pillow installer controls are removed, and update checks use stable releases from this repository.
 
 ## Output and limits
 

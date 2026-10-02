@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.6.3 — 2026-10-02
+
+- Show Created by Exodus (original by shotariya).
+- Remove Discord, donations and Pillow installation panels and buttons.
+- Check this repository's stable releases using version tags, excluding drafts and prereleases.
+- Keep updates as manual release downloads.
+
 ## 2.6.2 — 2026-10-02
 
 - Publish the GTA edition with installation, usage, feature and validation documentation.

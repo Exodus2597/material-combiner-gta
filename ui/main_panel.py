@@ -2,8 +2,6 @@
 
 This module provides the primary UI panel for the Material Combiner addon,
 displaying the material list, atlas property controls, and action buttons.
-It also handles the Pillow installation interface when the library is not
-available.
 """
 
 import bpy
@@ -11,21 +9,13 @@ import bpy
 from .. import globs
 from ..icons import get_icon_id
 
-_GITHUB_README_URL = "https://github.com/Grim-es/material-combiner-addon/?tab=readme-ov-file#pillow-installation-process-is-repeated"
-_DISCORD_CONTACT_URL = "https://discordapp.com/users/275608234595713024"
-_INSTALL_HELP_TEXT = (
-    "If the installation process is repeated, try running Blender as Administrator "
-    "or check your Internet connection."
-)
-
 
 class MaterialCombinerPanel(bpy.types.Panel):
     """Main panel for the Material Combiner addon.
 
     This class implements the primary UI panel for the Material Combiner addon,
     providing access to the material list, atlas properties settings, and
-    action buttons. It also handles different states based on Pillow
-    installation status.
+    action buttons. Legacy PNG controls appear when Pillow is available.
     """
 
     bl_label = "Main Menu"
@@ -35,10 +25,7 @@ class MaterialCombinerPanel(bpy.types.Panel):
     bl_category = "MatCombiner"
 
     def draw(self, context: bpy.types.Context) -> None:
-        """Draw the panel interface based on Pillow installation status.
-
-        Renders different panel states depending on whether Pillow is installed,
-        installation is in progress, or installation needs to be initiated.
+        """Draw GTA controls and the available legacy PNG controls.
 
         Args:
             context: The current Blender context.
@@ -50,14 +37,9 @@ class MaterialCombinerPanel(bpy.types.Panel):
         gta.operator("smc.import_textured_glb", text="Import GLB + Textures", icon="IMPORT")
         gta.operator("smc.gta_atlas", text="Merge Selected + DDS Atlas", icon="EXPORT")
         gta.label(text="One UV map; originals retained.")
-        layout.separator()
-
         if globs.pil_available:
+            layout.separator()
             self._render_main_interface(context, layout)
-        elif globs.pil_install_attempted:
-            self.render_install_success(layout)
-        else:
-            self.draw_pillow_installer(context, layout)
 
     def _render_main_interface(
         self, context: bpy.types.Context, layout: bpy.types.UILayout
@@ -240,85 +222,3 @@ class MaterialCombinerPanel(bpy.types.Panel):
             text="Generate Texture Atlas",
             icon_value=get_icon_id("save"),
         ).cats = False
-
-    @staticmethod
-    def draw_pillow_installer(
-        context: bpy.types.Context, layout: bpy.types.UILayout
-    ) -> None:
-        """Draw the Pillow installation interface when Pillow is not installed.
-
-        Creates UI elements for installing Pillow and displaying
-        help information.
-
-        Args:
-            context: The current Blender context.
-            layout: The layout to draw into.
-        """
-        box = layout.box()
-        MaterialCombinerPanel._render_install_header(box)
-        MaterialCombinerPanel._render_install_actions(box)
-        MaterialCombinerPanel._render_install_troubleshooting(box, context)
-
-    @staticmethod
-    def _render_install_header(layout: bpy.types.UILayout) -> None:
-        """Render the installation header with a warning message.
-
-        Args:
-            layout: The layout to draw into.
-        """
-        col = layout.column(align=True)
-        col.label(text="Python Imaging Library Required", icon="ERROR")
-        col.separator()
-
-    @staticmethod
-    def _render_install_actions(layout: bpy.types.UILayout) -> None:
-        """Render the installation action buttons for Pillow installation.
-
-        Args:
-            layout: The layout to draw into.
-        """
-        row = layout.row()
-        row.scale_y = 1.5
-        row.operator("smc.get_pillow", text="Install Pillow", icon="IMPORT")
-
-    @staticmethod
-    def _render_install_troubleshooting(
-        layout: bpy.types.UILayout, context: bpy.types.Context
-    ) -> None:
-        """Render installation troubleshooting help with external links.
-
-        Provides information and links for getting help with
-        installation issues.
-
-        Args:
-            layout: The layout to draw into.
-            context: The current Blender context.
-        """
-        layout.separator()
-        layout.label(text=_INSTALL_HELP_TEXT)
-
-        help_col = layout.column(align=True)
-        help_col.scale_y = 1.2
-        help_col.operator(
-            "smc.browser", text="ReadMe on GitHub", icon="URL"
-        ).link = _GITHUB_README_URL
-
-        help_col.operator(
-            "smc.browser", text="Contact Support (Discord)", icon="COMMUNITY"
-        ).link = _DISCORD_CONTACT_URL
-
-    @staticmethod
-    def render_install_success(layout: bpy.types.UILayout) -> None:
-        """Render an installation success message prompting for restart.
-
-        Displays a message indicating that the Pillow installation is complete
-        and the Blender needs to be restarted.
-
-        Args:
-            layout: The layout to draw into.
-        """
-        box = layout.box().column()
-        box.label(text="Installation Complete", icon_value=get_icon_id("done"))
-        box.label(
-            text="Please Restart Blender", icon_value=get_icon_id("refresh")
-        )

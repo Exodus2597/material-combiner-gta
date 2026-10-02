@@ -30,8 +30,8 @@ SOFTWARE.
 bl_info = {
     "name": "Shotariya's Material Combiner",
     "description": "GLB texture import and diffuse/normal DDS atlases for GTA V / Sollumz",
-    "author": "shotariya; GTA edition: Exodus2597",
-    "version": (2, 6, 2),
+    "author": "Exodus (original by shotariya)",
+    "version": (2, 6, 3),
     "blender": (5, 2, 0),
     "location": "View3D",
     "wiki_url": "https://github.com/Exodus2597/material-combiner-gta",
