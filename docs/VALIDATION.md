@@ -4,6 +4,11 @@ Environment: Blender 5.2.1 LTS (`9e2066aef7ef`), Sollumz 2.9.0, its matching pur
 
 ## Passed
 
+- Local 2.6.5 preview: supplied SWAT GLB imports with all new-object modifiers removed by default. Disabling Remove All Modifiers retains its armature modifier/binding. Group names, every vertex weight and rest coordinates match both import modes; existing objects/modifiers remain untouched. The cleaned import merges successfully to DDS while retaining groups when requested. Import error rollback, repeated imports and external texture setup regressions pass.
+
+- Local 2.6.4 preview: default settings retain the previous group removal, white Color 1 and High-only output. New toggles preserve group names/weights across multi-mesh joining (including different source group orders), reproduce the original posed deformation, and set exact Color 1/2 sRGB bytes. Generated Medium/Low meshes preserve UVMap 0, the atlas material, weights and colors; test triangle counts are 448 → 268 → 160. Switching/exporting LODs introduces no duplicate group names. Failure after LOD creation removes new meshes/files and restores sources/selection. Existing merge, normal-bake and input-guard regressions pass.
+- Supplied SWAT armor GLB with all three options passes source-data preservation, retained High weights, exact color layers, two DXT5 DDS files and Sollumz CodeWalker export of three skinned LODs. Triangle counts are 31,308 → 18,784 → 11,270.
+
 - Version 2.6.3: packaged registration/unregistration and panel drawing pass in Blender 5.2.1 without Pillow. Credits show Exodus (original by shotariya); only the repository issue button remains. Main and embedded panels contain no installer/donation/Discord controls. Release checks use this repository's version tags, sort versions and exclude drafts/prereleases. Simulated newer/equal releases, empty/malformed responses and timeout handling pass. Before publication, live GitHub checks detected public 2.6.2 from 2.6.1 and correctly reported the newer local 2.6.3 build as up to date.
 
 - Version 2.6.2 publishes repository documentation, retains upstream licensing materials and points help/issues/manual update notices at Exodus2597/material-combiner-gta. Packaged Blender registration validates the new version and updater configuration.

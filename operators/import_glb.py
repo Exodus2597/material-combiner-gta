@@ -127,11 +127,14 @@ class ImportTexturedGLB(bpy.types.Operator, ImportHelper):
         ("DIRECTX", "DirectX (-Y)", "Invert green before Blender's Normal Map node"),
         ("OPENGL", "OpenGL (+Y)", "Use the texture without green inversion")])
     pack_images: BoolProperty(name="Pack Images into Blend", default=True)
+    remove_modifiers: BoolProperty(name="Remove All Modifiers", default=True,
+                                   description="Remove modifiers without applying them, including Armature. Vertex groups remain; turn off to keep armature deformation")
 
     def draw(self, context):
         self.layout.prop(self, "texture_root")
         self.layout.prop(self, "normal_convention")
         self.layout.prop(self, "pack_images")
+        self.layout.prop(self, "remove_modifiers")
 
     def execute(self, context):
         selected, active = list(context.selected_objects), context.view_layer.objects.active
@@ -261,6 +264,10 @@ class ImportTexturedGLB(bpy.types.Operator, ImportHelper):
                     if not math.isfinite(roughness):
                         raise ValueError(f"{mat.name}: invalid roughness")
                     bsdf.inputs["Roughness"].default_value = min(1, max(0, roughness))
+            if self.remove_modifiers:
+                for obj in imported:
+                    for modifier in list(obj.modifiers):
+                        obj.modifiers.remove(modifier)
             select_only(context, meshes)
             success = True
             self.report({"INFO"}, f"Imported {len(meshes)} meshes: {diffuse_count} diffuse maps, "

@@ -185,6 +185,40 @@ def select_only(context, objects):
     context.view_layer.objects.active = objects[0] if objects else None
 
 
+def generate_lods(context, merged, meshes):
+    """Decimate rest geometry successively, without evaluating the armature."""
+    source = merged.data
+    for label, lod in (("medium", merged.sz_lods.medium), ("low", merged.sz_lods.low)):
+        mesh = source.copy()
+        mesh.use_fake_user = False
+        meshes.append(mesh)
+        temporary = bpy.data.objects.new("__smc_lod", mesh)
+        context.collection.objects.link(temporary)
+        try:
+            # Mesh deform weights use these object-level group indices.
+            for group in merged.vertex_groups:
+                if group.name not in temporary.vertex_groups:
+                    temporary.vertex_groups.new(name=group.name)
+            if list(temporary.vertex_groups.keys()) != list(merged.vertex_groups.keys()):
+                raise RuntimeError("Could not preserve vertex group indices for LOD generation")
+            select_only(context, [temporary])
+            modifier = temporary.modifiers.new("Atlas LOD", "DECIMATE")
+            modifier.ratio = 0.6
+            modifier.use_collapse_triangulate = True
+            if bpy.ops.object.modifier_apply(modifier=modifier.name) != {"FINISHED"}:
+                raise RuntimeError(f"Could not generate {label} LOD")
+            if temporary.data != mesh:
+                meshes.append(temporary.data)
+            if not temporary.data.polygons:
+                raise ValueError(f"Decimation removed every face from {label} LOD; disable Generate LODs")
+            temporary.data.name = merged.data.name + "_" + label
+            lod.mesh = temporary.data
+            source = temporary.data
+        finally:
+            bpy.data.objects.remove(temporary, do_unlink=True)
+            select_only(context, [merged])
+
+
 def validate_shader_inputs(mat, sockets):
     # Cycles cannot evaluate Eevee's Shader to RGB, including inside groups.
     def check_node(node, visited):
@@ -345,6 +379,12 @@ class GTAAtlas(bpy.types.Operator, ExportHelper):
                               description="Hide originals in this view layer and renders after success")
     export_normals: BoolProperty(name="Export Normal DDS", default=True,
                                 description="Bake tangent normals to a second DDS and assign BumpSampler")
+    keep_vertex_groups: BoolProperty(name="Keep Vertex Groups (Rigging)", default=False,
+                                    description="Keep source groups and weights on merged output; compatible armatures are copied without retargeting")
+    set_vertex_colors: BoolProperty(name="Set GTA Vertex Colors", default=False,
+                                   description="Set Color 1 to orange #FF8000FF and Color 2 to transparent black #00000000")
+    generate_lods: BoolProperty(name="Generate Medium + Low LODs", default=False,
+                               description="Decimate High to Medium at ratio 0.6, then Medium to Low at ratio 0.6")
 
     def draw(self, context):
         layout = self.layout
@@ -361,6 +401,13 @@ class GTAAtlas(bpy.types.Operator, ExportHelper):
         layout.prop(self, "padding")
         layout.prop(self, "shader")
         layout.prop(self, "hide_sources")
+        layout.prop(self, "keep_vertex_groups")
+        layout.prop(self, "set_vertex_colors")
+        if self.set_vertex_colors:
+            layout.label(text="Color 1: #FF8000FF; Color 2: #00000000")
+        layout.prop(self, "generate_lods")
+        if self.generate_lods:
+            layout.label(text="Medium: 60% of High; Low: 60% of Medium")
         layout.label(text="Diffuse + opacity, plus optional normal atlas. Specular is not baked.")
         layout.label(text="DDS: shared UV layout, independent sizes/formats, full mipmaps.")
 
@@ -655,7 +702,15 @@ class GTAAtlas(bpy.types.Operator, ExportHelper):
                 bpy.ops.object.join()
             merged = context.view_layer.objects.active
             copies[:] = [merged]
-            merged.vertex_groups.clear()
+            if not self.keep_vertex_groups:
+                merged.vertex_groups.clear()
+            if self.set_vertex_colors:
+                for label, color in (("Color 1", (1.0, 128 / 255, 0.0, 1.0)),
+                                     ("Color 2", (0.0, 0.0, 0.0, 0.0))):
+                    attr = merged.data.color_attributes.get(label)
+                    if attr is None:
+                        attr = merged.data.color_attributes.new(name=label, type="BYTE_COLOR", domain="CORNER")
+                    attr.data.foreach_set("color_srgb", np.tile(color, len(attr.data)).astype(np.float32))
             merged.name = name + ".model"
             if rig:
                 mod = next(m for m in merged.modifiers if m.type == "ARMATURE")
@@ -683,6 +738,8 @@ class GTAAtlas(bpy.types.Operator, ExportHelper):
                 drawable.name = name
                 merged.name = name + ".model"
             merged.data.name = name + "_mesh"
+            if self.generate_lods:
+                generate_lods(context, merged, meshes)
             if len(merged.data.uv_layers) != 1 or len(merged.data.materials) != 1:
                 raise RuntimeError("Merged mesh did not produce exactly one UV map and material")
             if self.hide_sources:

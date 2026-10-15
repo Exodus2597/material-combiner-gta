@@ -6,6 +6,7 @@
 2. Set **Texture Export Folder** to the export root containing the model, material JSON sidecars and texture directories. Leave it empty to infer the root from an Unreal-style `Content` directory.
 3. Keep **Source Normal Convention: Automatic** for Unreal JSON exports, or select the actual source convention explicitly.
 4. Enable **Pack Images into Blend** to keep imported textures with the blend file.
+5. **Remove All Modifiers** is enabled by default. It removes modifiers, including Armature, from newly imported objects without applying them. Vertex groups, weights and armature objects remain. Turn this off to retain armature deformation, including when you intend to keep a working rig through the merge option.
 
 JSON references identify diffuse and normal textures by their exported paths. Without JSON, external textures can match material names with `_B`, `_D`, `_Diffuse`, `_BaseColor`, `_Albedo`, `_N`, `_Normal` or `_Normals` suffixes. Missing explicitly referenced files and ambiguous matches cancel import and restore the previous scene. Ordinary GLB materials retain embedded textures.
 
@@ -20,7 +21,11 @@ Unreal DirectX normals have their green channel flipped for Blender's Normal Map
 5. Enable **Export Normal DDS**, then choose **Normal Size** and **Normal DDS Format**. These controls are independent of diffuse settings.
 6. Keep **UV Layout → Keep Material Texture Sheets** for a readable map. **Flexible Material Rectangles** fills spare space by resizing material sheets and their UVs together. Disable it to preserve original sheet aspect ratios. **Unwrap Geometry** uses Smart UV Project for fresh islands instead.
 7. Choose padding and a shader. Padding is measured in diffuse pixels; normal bake margins scale with normal resolution.
-8. Run the operation. Baking uses CPU Cycles; larger textures need more memory and bake time.
+8. Choose the optional mesh settings in the same DDS save dialog:
+   - **Keep Vertex Groups (Rigging)** retains source group names and weights in the merged copy. Compatible rigged inputs retain a copied armature; no retargeting or new weighting is performed. Disabled by default, which removes all output groups and weights.
+   - **Set GTA Vertex Colors** creates byte color layers **Color 1: #FF8000FF** (orange) and **Color 2: #00000000** (transparent black). Values use sRGB bytes, including green = 128. Disabled by default, which retains the previous white Color 1 output.
+   - **Generate Medium + Low LODs** uses Collapse Decimate at ratio **0.6** for Medium from High, then **0.6** for Low from Medium. Targets are approximately 60% and 36% of High's triangle count; actual counts depend on topology. High remains unchanged and active. Disabled by default.
+9. Run the operation. Baking uses CPU Cycles; larger textures need more memory and bake time.
 
 Example settings:
 
@@ -40,9 +45,10 @@ With full mipmaps, a 2048 atlas is about 21.3 MiB in A8R8G8B8 or 5.3 MiB in DXT5
 
 - `my_prop.dds`: sRGB base color with opacity in alpha.
 - `my_prop_normal.dds`: optional linear tangent normals, GTA DirectX (-Y), opaque alpha.
-- One merged model, one material and exactly one `UVMap 0`, with **all vertex groups and weights removed**.
+- One merged model, one material and exactly one `UVMap 0`. Vertex groups and weights are removed unless **Keep Vertex Groups (Rigging)** is enabled.
 - A Sollumz **Drawable → Drawable Model** hierarchy. `DiffuseSampler` and optional `BumpSampler` are marked embedded; BumpSampler uses Non-Color.
-- White `Color 1` prevents source vertex colors already baked into the texture from applying a second tint.
+- White `Color 1` prevents source vertex colors already baked into the texture from applying a second tint. **Set GTA Vertex Colors** replaces this with the requested orange Color 1 and transparent black Color 2.
+- Optional Medium and Low meshes appear in the model's Sollumz LOD slots, sharing its material and atlas UV layout. Retained weights and chosen vertex colors carry into both LODs. No Very High/Very Low meshes are generated. Very small meshes may not reduce further.
 
 Normal export selects `normal.sps`, `normal_cutout.sps` or `normal_alpha.sps` for Opaque, Cutout or Alpha. Disabling normal export selects `default.sps`, `cutout.sps` or `alpha.sps`.
 
@@ -54,4 +60,4 @@ Source models keep their geometry, UVs, materials and weights. **Hide Source Mod
 
 Select the new Drawable and export through Sollumz. CodeWalker XML export with both DDS references/files has been validated. This add-on does not automatically create YTD/YTYP files or install assets into GTA V.
 
-For skeletal deformation, add the correct GTA vertex groups and weights and retarget the skeleton as required. Imported GLB weights stay only on original meshes; merged output deliberately starts without them.
+Enable **Keep Vertex Groups (Rigging)** to retain imported GLB weights in the merged model and generated LODs. GTA skeleton compatibility and retargeting remain separate steps. When this option is off, merged output starts without weights. Sollumz exports the vertex color channels used by the selected shader; both requested color layers remain available on the Blender meshes.

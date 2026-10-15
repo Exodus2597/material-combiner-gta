@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.6.6 — 2026-10-15
+
+- Rename the installed add-on to Exodus' Material Combiner. Retain the original author credit and source licensing notices.
+
+- Add Remove All Modifiers to the GLB import dialog, enabled by default.
+- Remove modifiers only from newly imported objects without applying them; retain geometry, groups/weights and armature objects. Disable the toggle to keep the imported armature modifier and rig deformation.
+- Add DDS save-dialog toggles to keep vertex groups/weights, set GTA vertex colors and generate Medium/Low LODs. All default off.
+- Set Color 1 to exact sRGB bytes #FF8000FF and Color 2 to #00000000 when enabled.
+- Generate Medium from High at Decimate ratio 0.6, then Low from Medium at ratio 0.6. Preserve High and leave it active.
+- Keep compatible rigging, shared atlas material, UVs and vertex colors across generated LODs; restore sources and remove generated meshes on failure.
+
 ## 2.6.3 — 2026-10-02
 
 - Show Created by Exodus (original by shotariya).

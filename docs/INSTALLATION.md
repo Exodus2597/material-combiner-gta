@@ -3,11 +3,13 @@
 Tested configuration: **Blender 5.2.1 LTS, Sollumz 2.9.0, Windows**. Other Blender/Sollumz combinations have not been validated for the GTA workflow.
 
 1. Install and enable [Sollumz](https://github.com/Sollumz/Sollumz).
-2. Download **`material_combiner_gta_2_6_3.zip`** from [Releases](https://github.com/Exodus2597/material-combiner-gta/releases/latest). Use this asset, rather than GitHub's automatically generated source archives.
+2. Download **`material_combiner_gta_2_6_6.zip`** from [Releases](https://github.com/Exodus2597/material-combiner-gta/releases/latest). Use this asset, rather than GitHub's automatically generated source archives.
 3. Disable any previous Material Combiner installation. Different editions share operator names and must not run together.
 4. Open **Edit → Preferences → Add-ons → menu → Install from Disk** in Blender.
-5. Select the ZIP without extracting it and enable **Shotariya's Material Combiner**.
+5. Select the ZIP without extracting it and enable **Exodus' Material Combiner**.
 6. In the 3D viewport, press **N** and open **MatCombiner**. The GTA section contains **Import GLB + Textures** and **Merge Selected + DDS Atlas**.
+
+Older published versions appear under the original add-on name. Version 2.6.6 appears as **Exodus' Material Combiner**.
 
 Cycles must be available. DDS export uses Blender's bundled NumPy and does not require Pillow, texconv or an external DDS encoder. Pillow is needed only for the original PNG/PBR combining workflow.
 
