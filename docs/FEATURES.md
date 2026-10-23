@@ -4,6 +4,7 @@ The original Material Combiner PNG workflow remains available. This edition adds
 
 | Addition | Behavior |
 | --- | --- |
+| OVL import with textures | Use installed Cobra Tools and external Python 3.11 to decode highest-detail static meshes and FGM diffuse/normal/opacity references. Textures are packed, BC5 normals receive reconstructed Z, and selected meshes feed directly into DDS/Sollumz merging. Optional shared archives/PNG folders resolve external references. |
 | GLB import with external textures | Blender's GLB importer loads geometry; material JSON or unambiguous name matching attaches diffuse and normal maps. Images can be packed into the blend. |
 | Optional import modifier removal | Remove All Modifiers defaults on and removes modifiers from newly imported objects without applying them. Groups/weights remain. Disable it to retain armature deformation. Existing scene objects are untouched. |
 | One merged mesh | All selected mesh objects become one output copy with one material and a Sollumz Drawable hierarchy. |
@@ -18,6 +19,8 @@ The original Material Combiner PNG workflow remains available. This edition adds
 | Optional rigging retention | Keep Vertex Groups retains names and weights after joining, including generated LODs. Default off retains the previous cleanup behavior. Source groups and weights remain intact. |
 | Optional GTA vertex colors | Set Color 1 to #FF8000FF and Color 2 to #00000000 as exact sRGB byte corner colors, including on generated LODs. Default off keeps white Color 1. |
 | Optional Medium/Low LODs | Collapse Decimate successively uses ratio 0.6 from High to Medium and Medium to Low (approximately 60%/36% of High). High stays unchanged and active; LODs share the atlas material and UV layout. |
+| Optional backfaces | Create Backfaces appends reversed copies behind the original surface with adjustable offset (default 0.0001 Blender units). Preserves UVs/colors/weights/custom normals and shares DDS atlases. Applied after decimation to High and generated Medium/Low; doubles faces and defaults off. |
+| Standalone backfaces | Misc. Tools → Create Backfaces edits selected mesh objects/current Sollumz LOD without merging or baking. Adjustable world-space offset, Undo, shared-data isolation and all-or-nothing updates. Requires only Blender. |
 | Data protection | Source geometry, UVs and materials remain unchanged. Existing outputs are never overwritten. Failed merges remove temporary copies and incomplete output files. |
 
 ## Fixes

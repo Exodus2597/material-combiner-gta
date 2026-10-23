@@ -1,5 +1,35 @@
 # Import and merge
 
+## Misc. Tools — Create Backfaces
+
+1. In Object Mode, select the mesh objects to edit.
+2. Open **N → MatCombiner → Misc. Tools → Create Backfaces**.
+3. Set **Backface Offset** (default **0.0001 Blender world units**) and confirm. Zero is supported. Object transforms are retained, including nonuniform and mirrored scale.
+
+The standalone tool appends reversed, slightly offset faces directly to the selected meshes. Each run doubles the face count. It retains UVs, colors, weights, custom normals, materials, material culling settings and modifiers; no DDS files, texture baking or material merging are involved. Unselected objects sharing the original mesh stay unchanged. Use **Undo** to revert. Shape-key meshes are rejected to protect their data. With unapplied modifiers, this edits the underlying base mesh.
+
+For Sollumz models, only the current/displayed LOD is edited. Switch LODs before running it on another level. The merge-dialog backface option continues to cover High and generated Medium/Low together. The standalone tool works without Sollumz, Cobra or Pillow and accepts meshes without UVs/materials.
+
+## Import OVL with textures
+
+1. Install Cobra Tools and Python 3.11 with Cobra's dependencies (`numpy`, `Pillow`, `imageio`, plus any dependencies required by your Cobra version). OVL extraction also uses Cobra's existing texture converter. The tested Planet Zoo 2 setup uses Cobra Tools 2026.10.11 with local format-54 patches for archive/game detection, model decoding and texture extraction. These external Cobra patches are not bundled; an unmodified Cobra installation is not validated for Planet Zoo 2. The add-on's Sea Fan/foliage adapters do not replace that dependency. Updating Cobra may remove local patches. See [installation requirements](INSTALLATION.md#ovl-requirements).
+2. Open **N → MatCombiner → Import OVL + Textures** and select an `.ovl`. Leave matching `.ovs` and `.aux` files beside it. Source game files are read only; extraction uses a temporary folder.
+3. **Source Game → Automatic** uses Cobra detection, including the original Planet Zoo 2 folder path. Choose the game explicitly if you moved an archive out of its game directory.
+4. Leave **Shared Textures OVL** and **Shared Texture Folder** empty when all required textures are in the main archive. Otherwise select the second archive or a folder containing already extracted Cobra PNGs. FGM references choose the actual textures; ambiguous or missing required maps cancel import.
+5. Leave **Invert Normal Green** off for Cobra-converted normal maps. Enable it only when the imported normals need the opposite green convention. BC5 X/Y maps receive a reconstructed Z channel before import.
+6. **Advanced Paths** optionally sets **Cobra Tools Folder** and **Python Executable** if automatic detection cannot locate your installation. The Cobra folder must contain `generated` and `modules`.
+7. After import, the highest-detail static mesh parts are selected in the current scene. Diffuse, normal and supported opacity maps are connected to Principled materials and packed into the blend. Use **Merge Selected + DDS Atlas** exactly as for GLB models.
+
+Dedicated opacity maps retain graded transparency, including translucent fish fins. When merging these models, choose **Shader → Alpha** to retain that transparency in Sollumz. **Cutout** applies a hard alpha test and can hide translucent surfaces; **Opaque** ignores transparency.
+
+Some PZ2 foliage stores `pOpacity` entirely in green, with an empty red channel. The importer uses green in that case; reading red would make every leaf transparent. Aquatic Seaweed Wrack and Aquatic Grass Eel are tested. Restart Blender and reimport after updating from 2.6.10 or earlier to replace affected imported materials.
+
+Planet Zoo 2 format-54 static imports skip the separate bone block using its declared byte size. This avoids Cobra's vegetation bone-reader failure on Common Sea Fan without modifying Cobra or bypassing geometry decoding. The archive contains three model variants; all three import and are selected. Deselect or delete unwanted variants before merging. Vegetation's `pOpacity` map is supported; wind, collisions and skeletons are not imported.
+
+PZ2's format-4, 32-byte foliage vertices are supported for static geometry. Magnificent Sea Anemone imports three variants, each with a body and tentacle mesh. Keep both parts of the variant you want selected before merging. Malformed/unsupported vertex data stops extraction with its decoder error. For PZ2 BC7 normals whose blue channel is entirely below neutral, the importer infers packed X/Y data and reconstructs positive Z. The anemone render was checked; this does not reproduce the game's complete material shader.
+
+OVL import creates static geometry, not a skeleton or animation. It does not recreate fur, iridescence, material variants or every specialized game shader. Meshes without a referenced normal texture use their geometric normals. Unused unsupported maps are not extracted. Original archive data and existing scene objects/materials remain unchanged. The GLB workflow remains available without Cobra or an external Python installation.
+
 ## Import GLB with textures
 
 1. Open **N → MatCombiner → Import GLB + Textures** and choose a `.glb` file.
@@ -25,6 +55,7 @@ Unreal DirectX normals have their green channel flipped for Blender's Normal Map
    - **Keep Vertex Groups (Rigging)** retains source group names and weights in the merged copy. Compatible rigged inputs retain a copied armature; no retargeting or new weighting is performed. Disabled by default, which removes all output groups and weights.
    - **Set GTA Vertex Colors** creates byte color layers **Color 1: #FF8000FF** (orange) and **Color 2: #00000000** (transparent black). Values use sRGB bytes, including green = 128. Disabled by default, which retains the previous white Color 1 output.
    - **Generate Medium + Low LODs** uses Collapse Decimate at ratio **0.6** for Medium from High, then **0.6** for Low from Medium. Targets are approximately 60% and 36% of High's triangle count; actual counts depend on topology. High remains unchanged and active. Disabled by default.
+   - **Create Backfaces (Two-Sided Mesh)** adds reversed copies behind the original faces so thin leaf cards render from either side with backface culling. **Backface Offset** defaults to **0.0001 Blender units**; choose a smaller value or zero when needed. Copies move opposite the original vertex normals and retain UVs, material, colors, weights and reversed custom normals. Backfaces are added after baking and LOD decimation to High and generated Medium/Low meshes. The atlas size stays unchanged; face count doubles. Disabled by default. It applies to every face in the selected output, so select the foliage you want to process. Source objects remain unchanged.
 9. Run the operation. Baking uses CPU Cycles; larger textures need more memory and bake time.
 
 Example settings:

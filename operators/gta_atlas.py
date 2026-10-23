@@ -12,8 +12,9 @@ import traceback
 from pathlib import Path
 
 import bpy
+import bmesh
 import numpy as np
-from bpy.props import BoolProperty, EnumProperty, IntProperty, StringProperty
+from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty, StringProperty
 from bpy_extras.io_utils import ExportHelper
 
 from ..utils.dds import write_dds
@@ -219,6 +220,45 @@ def generate_lods(context, merged, meshes):
             select_only(context, [merged])
 
 
+def add_backfaces(mesh, distance, matrix=None):
+    """Append offset, reversed copies after baking/decimation; keep corner data."""
+    normals = np.array([corner.vector[:] for corner in mesh.corner_normals]) if mesh.has_custom_normals else None
+    inverse = matrix.to_3x3().inverted() if matrix is not None else None
+    normal_matrix = inverse.transposed() if inverse is not None else None
+    bm = bmesh.new()
+    try:
+        bm.from_mesh(mesh)
+        bm.normal_update()
+        original = set(bm.verts)
+        corner_ids = bm.loops.layers.int.new("__smc_backface_corner") if normals is not None else None
+        if corner_ids is not None:
+            for face in bm.faces:
+                for loop, index in zip(face.loops, mesh.polygons[face.index].loop_indices):
+                    loop[corner_ids] = index + 1
+        result = bmesh.ops.duplicate(bm, geom=[*bm.verts, *bm.edges, *bm.faces])
+        for source, copy in result["vert_map"].items():
+            if source in original:
+                direction = source.normal
+                if inverse is not None:
+                    direction = inverse @ (normal_matrix @ direction).normalized()
+                copy.co = source.co - direction * distance
+        for face in result["geom"]:
+            if isinstance(face, bmesh.types.BMFace):
+                face.normal_flip()
+                if corner_ids is not None:
+                    for loop in face.loops:
+                        loop[corner_ids] = -loop[corner_ids]
+        bm.to_mesh(mesh)
+        mesh.update()
+        if corner_ids is not None:
+            attribute = mesh.attributes[corner_ids.name]
+            indices = np.array([item.value for item in attribute.data])
+            mesh.attributes.remove(attribute)
+            mesh.normals_split_custom_set(normals[np.abs(indices) - 1] * np.sign(indices)[:, None])
+    finally:
+        bm.free()
+
+
 def validate_shader_inputs(mat, sockets):
     # Cycles cannot evaluate Eevee's Shader to RGB, including inside groups.
     def check_node(node, visited):
@@ -385,6 +425,11 @@ class GTAAtlas(bpy.types.Operator, ExportHelper):
                                    description="Set Color 1 to orange #FF8000FF and Color 2 to transparent black #00000000")
     generate_lods: BoolProperty(name="Generate Medium + Low LODs", default=False,
                                description="Decimate High to Medium at ratio 0.6, then Medium to Low at ratio 0.6")
+    create_backfaces: BoolProperty(name="Create Backfaces (Two-Sided Mesh)", default=False,
+                                  description="Duplicate faces behind the surface and reverse winding so both sides render with backface culling; doubles face count")
+    backface_offset: FloatProperty(name="Backface Offset", default=0.0001, min=0.0, soft_max=0.01,
+                                  subtype="DISTANCE", unit="LENGTH", precision=6,
+                                  description="Distance behind each original vertex along its normal, in Blender units after applied transforms")
 
     def draw(self, context):
         layout = self.layout
@@ -408,6 +453,10 @@ class GTAAtlas(bpy.types.Operator, ExportHelper):
         layout.prop(self, "generate_lods")
         if self.generate_lods:
             layout.label(text="Medium: 60% of High; Low: 60% of Medium")
+        layout.prop(self, "create_backfaces")
+        if self.create_backfaces:
+            layout.prop(self, "backface_offset")
+            layout.label(text="Doubles faces on High and generated LODs.")
         layout.label(text="Diffuse + opacity, plus optional normal atlas. Specular is not baked.")
         layout.label(text="DDS: shared UV layout, independent sizes/formats, full mipmaps.")
 
@@ -429,6 +478,8 @@ class GTAAtlas(bpy.types.Operator, ExportHelper):
         try:
             shaders, helper = sollumz_api()
             rig = validate_sources(context, objects)
+            if self.create_backfaces and (not np.isfinite(self.backface_offset) or self.backface_offset < 0):
+                raise ValueError("Backface Offset must be finite and nonnegative")
             size = int(self.resolution)
             normal_size = size if self.normal_resolution == "SAME" else int(self.normal_resolution)
             world_size = max(size, normal_size) if self.export_normals else size
@@ -740,6 +791,13 @@ class GTAAtlas(bpy.types.Operator, ExportHelper):
             merged.data.name = name + "_mesh"
             if self.generate_lods:
                 generate_lods(context, merged, meshes)
+            if self.create_backfaces:
+                targets = [merged.data]
+                if self.generate_lods:
+                    targets.extend((merged.sz_lods.medium.mesh, merged.sz_lods.low.mesh))
+                for mesh in targets:
+                    add_backfaces(mesh, self.backface_offset)
+                final_material.use_backface_culling = True
             if len(merged.data.uv_layers) != 1 or len(merged.data.materials) != 1:
                 raise RuntimeError("Merged mesh did not produce exactly one UV map and material")
             if self.hide_sources:

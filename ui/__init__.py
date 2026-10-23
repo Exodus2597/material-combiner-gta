@@ -11,6 +11,7 @@ This package contains the UI panels and interface elements for the Material Comb
 from . import (
     credits_panel,
     main_panel,
+    misc_tools,
     property_panel,
     selection_menu,
     update_panel,
@@ -19,6 +20,7 @@ from . import (
 __all__ = [
     "credits_panel",
     "main_panel",
+    "misc_tools",
     "property_panel",
     "selection_menu",
     "update_panel",
