@@ -3,11 +3,10 @@
 import json
 import os
 from pathlib import Path
-import shutil
 import subprocess
+import sys
 import tempfile
 
-import addon_utils
 import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 from bpy_extras.io_utils import ImportHelper
@@ -15,13 +14,9 @@ from bpy_extras.io_utils import ImportHelper
 
 def cobra_directory(explicit):
     if explicit:
-        roots = [Path(bpy.path.abspath(explicit)).resolve()]
+        root = Path(bpy.path.abspath(explicit)).resolve()
     else:
-        roots = sorted({Path(module.__file__).resolve().parent for module in addon_utils.modules()
-                        if module.bl_info.get("name") == "Frontier's Cobra Engine Formats"})
-    if len(roots) != 1:
-        raise ValueError("Install Cobra Tools, or choose its folder under Advanced Paths")
-    root = roots[0]
+        return None  # The worker unpacks the bundled runtime in its private temporary folder.
     if not all((root / name).is_file() for name in ("generated/formats/ovl/__init__.py", "modules/formats/DDS.py")):
         raise ValueError("Choose the Cobra Tools folder containing generated and modules")
     return root
@@ -31,23 +26,11 @@ def python_executable(explicit):
     if explicit:
         candidates = [Path(bpy.path.abspath(explicit))]
     else:
-        candidates = []
-        if os.name == "nt":
-            import winreg
-            for hive in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
-                try:
-                    with winreg.OpenKey(hive, r"Software\Python\PythonCore\3.11\InstallPath") as key:
-                        candidates.append(Path(winreg.QueryValueEx(key, "ExecutablePath")[0]))
-                except OSError:
-                    pass
-            candidates.append(Path(os.environ.get("LOCALAPPDATA", "")) / "Programs/Python/Python311/python.exe")
-        found = shutil.which("python3.11")
-        if found:
-            candidates.append(Path(found))
+        candidates = [Path(sys.prefix) / 'bin' / ('python.exe' if os.name == 'nt' else 'python3')]
     for candidate in candidates:
         if candidate.is_file() and candidate.suffix.lower() not in {".bat", ".cmd"}:
             return candidate.resolve()
-    raise ValueError("Cobra extraction needs Python 3.11 with Cobra's dependencies. Choose Python Executable under Advanced Paths")
+    raise ValueError("Cannot find Blender's Python executable. Choose Python Executable under Advanced Paths (Python 3.13 for the bundled runtime)")
 
 
 class ImportTexturedOVL(bpy.types.Operator, ImportHelper):
@@ -59,7 +42,7 @@ class ImportTexturedOVL(bpy.types.Operator, ImportHelper):
     filter_glob: StringProperty(default="*.ovl", options={"HIDDEN"})
     game: EnumProperty(name="Source Game", default="AUTO", items=[
         ("AUTO", "Automatic", "Use Cobra detection, including the original Planet Zoo 2 folder path"),
-        ("Planet Zoo 2", "Planet Zoo 2", "Requires the Planet Zoo 2 Cobra patch"),
+        ("Planet Zoo 2", "Planet Zoo 2", "Use the bundled Planet Zoo 2 format-54 decoder"),
         ("Planet Zoo", "Planet Zoo", "Use Planet Zoo archive decoding"),
         ("Planet Coaster 2", "Planet Coaster 2", "Use Planet Coaster 2 archive decoding"),
         ("Jurassic World Evolution 2", "Jurassic World Evolution 2", "Use Jurassic World Evolution 2 archive decoding")])
@@ -73,9 +56,11 @@ class ImportTexturedOVL(bpy.types.Operator, ImportHelper):
                                    description="Use the same modifier cleanup as GLB import")
     advanced_paths: BoolProperty(name="Advanced Paths", default=False)
     cobra_folder: StringProperty(name="Cobra Tools Folder", subtype="DIR_PATH",
-                                 description="Leave empty to find the installed Cobra add-on")
+                                 description="Optional custom Cobra source; leave empty to use the bundled patched runtime")
     python_path: StringProperty(name="Python Executable", subtype="FILE_PATH",
-                                description="Leave empty to find Python 3.11 with Cobra's dependencies")
+                                description="Leave empty to use Blender's Python; bundled dependencies require Python 3.13")
+    oodle_library: StringProperty(name="Oodle Library", subtype="FILE_PATH",
+                                 description="Optional game oo2core_*_win64.dll; automatically found beside the game's ovldata folder")
 
     def draw(self, context):
         layout = self.layout
@@ -89,6 +74,7 @@ class ImportTexturedOVL(bpy.types.Operator, ImportHelper):
         if self.advanced_paths:
             layout.prop(self, "cobra_folder")
             layout.prop(self, "python_path")
+            layout.prop(self, "oodle_library")
 
     def execute(self, context):
         try:
@@ -102,7 +88,11 @@ class ImportTexturedOVL(bpy.types.Operator, ImportHelper):
             worker = Path(__file__).resolve().parent.parent / "utils/ovl_extract.py"
             with tempfile.TemporaryDirectory(prefix="smc_ovl_") as folder:
                 output = Path(folder)
-                command = [str(python), str(worker), "--cobra", str(cobra), "--source", str(path), "--output", folder]
+                command = [str(python), '-I', '-B', str(worker), "--source", str(path), "--output", folder]
+                if cobra is not None:
+                    command.extend(("--cobra", str(cobra)))
+                if self.oodle_library:
+                    command.extend(("--oodle-library", str(Path(bpy.path.abspath(self.oodle_library)).resolve())))
                 if self.game != "AUTO":
                     command.extend(("--game", self.game))
                 for option, value, directory in (("--shared-archive", self.shared_archive, False),

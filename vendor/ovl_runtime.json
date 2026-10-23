@@ -1,0 +1,36 @@
+{
+  "archive": "ovl_runtime_win64_cp313.zip",
+  "python": [
+    3,
+    13
+  ],
+  "platform": "win_amd64",
+  "cobra_version": "2026.10.11",
+  "cobra_commit": "fe5d39d34adbd5c080c6d1b4c489ce6ab73a36a9",
+  "wheels": [
+    {
+      "package": "pillow",
+      "version": "13.0.0",
+      "filename": "pillow-13.0.0-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/d7/ed/1b16fb66a37e1b9e41370b93b2c614c7da761a5b2a41dc333f7af4639962/pillow-13.0.0-cp313-cp313-win_amd64.whl",
+      "sha256": "9dda0788a9932776a75d8bcc020076edc308ce2508b51f6739a45e3158b3fc42"
+    },
+    {
+      "package": "imageio",
+      "version": "2.37.2",
+      "filename": "imageio-2.37.2-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/fb/fe/301e0936b79bcab4cacc7548bf2853fc28dced0a578bab1f7ef53c9aa75b/imageio-2.37.2-py3-none-any.whl",
+      "sha256": "ad9adfb20335d718c03de457358ed69f141021a333c40a53e57273d8a5bd0b9b"
+    },
+    {
+      "package": "bitarray",
+      "version": "3.8.0",
+      "filename": "bitarray-3.8.0-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/2e/72/76e13f5cd23b8b9071747909663ce3b02da24a5e7e22c35146338625db35/bitarray-3.8.0-cp313-cp313-win_amd64.whl",
+      "sha256": "1c8f2a5d8006db5a555e06f9437e76bf52537d3dfd130cb8ae2b30866aca32c9"
+    }
+  ],
+  "sha256": "346d112c8061b8923f0858b334c41ab2019f9ca566d65e66c1b240cf084cc773",
+  "unpacked_bytes": 123410061,
+  "files": 1683
+}

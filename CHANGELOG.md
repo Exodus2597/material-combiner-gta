@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.7.1 — 2026-10-23
+
+- Bundle the patched Cobra Tools 2026.10.11 static decoder, Planet Zoo 2 format-54 fixes, texconv and pinned Pillow/imageio/bitarray libraries for Windows x64 / CPython 3.13.
+- Use Blender's own Python in an isolated worker by default. Remove installed-Cobra discovery and external Python 3.11 setup from normal OVL import; no pip, dependency downloads or Python environment changes occur during use.
+- Locate the existing game's Oodle DLL in game root/Win64 folders around `ovldata`; add an optional Advanced Paths → Oodle Library override for copied archives. Do not redistribute or modify the proprietary DLL.
+- Verify runtime SHA256 and archive paths before temporary extraction, retain source/licenses/provenance and add a deterministic runtime build tool.
+- Preserve all 2.7.0 OVL texture/foliage fixes, DDS/Sollumz merging and backface tools. Document the one-ZIP setup, platform support and game-DLL requirement.
+
 ## 2.7.0 — 2026-10-23
 
 - Publish the cumulative 2.6.7–2.6.13 previews as the stable OVL/backfaces release.

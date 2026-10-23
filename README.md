@@ -9,7 +9,7 @@ Modified edition of [Shotariya's Material Combiner](https://github.com/Grim-es/m
 ## What this edition adds
 
 - Import GLB models and attach external diffuse/normal textures through Unreal material JSON references or unambiguous name matching.
-- Import OVL models with Cobra Tools, resolve diffuse/normal/opacity textures from FGM references, and use the same DDS/Sollumz merge workflow.
+- Import OVL models with bundled, patched Cobra Tools, resolve diffuse/normal/opacity textures from FGM references, and use the same DDS/Sollumz merge workflow.
 - Optionally remove all imported modifiers, including Armature, using the default-on import toggle. Existing scene objects remain untouched.
 - Merge selected meshes into one Sollumz Drawable Model, one material and one `UVMap 0`.
 - Keep whole material texture sheets and their original UV island arrangement. Flexible rectangular packing uses spare atlas space more efficiently.
@@ -25,24 +25,33 @@ The original PNG/PBR combining workflow remains available. See [added features a
 ## Quick start
 
 1. Enable Sollumz and disable previous Material Combiner editions.
-2. Download **`material_combiner_gta_2_7_0.zip`** from [Releases](https://github.com/Exodus2597/material-combiner-gta/releases/latest). Install it through **Edit → Preferences → Add-ons → Install from Disk** and enable **Exodus' Material Combiner**. Restart Blender if an older version remains loaded.
+2. Download **`material_combiner_gta_2_7_1.zip`** from [Releases](https://github.com/Exodus2597/material-combiner-gta/releases/latest). Install it through **Edit → Preferences → Add-ons → Install from Disk** and enable **Exodus' Material Combiner**. Restart Blender if an older version remains loaded.
 3. Open **N → MatCombiner → Import GLB + Textures** to import a model and its maps, or select existing mesh objects in Object Mode.
 4. Click **Merge Selected + DDS Atlas**, choose a new lowercase DDS filename and select sizes, formats, UV layout and shader.
 5. Export the resulting Drawable through Sollumz.
 
 DDS generation uses Blender's bundled NumPy. No external DDS converter is required for the GTA workflow.
 
-## New in 2.7.0
+## New in 2.7.1
+
+- **Cobra runtime included:** the tested Planet Zoo 2 format-54 patches and decoder dependencies ship inside the installation ZIP.
+- **No separate setup:** use Blender's own Python and offline packaged libraries; imports do not install or alter packages in Blender.
+- **Game decompression detected automatically:** use the installed game's Oodle DLL without copying it. Optional Advanced Paths support moved archives/custom runtimes.
+- Runtime integrity/path checks protect extraction; temporary runtime files are removed after import. Source and dependency licenses are included. See [bundled components](vendor/README.md).
+
+## OVL and backface features (introduced in 2.7.0)
 
 ### OVL models and textures
 
 Open **N → MatCombiner → Import OVL + Textures**, select an `.ovl` and keep its `.ovs`/`.aux` companions beside it. The importer locates highest-detail static meshes and their FGM-referenced diffuse, normal and supported opacity textures, packs the images into Blender, and selects the imported meshes. Use **Merge Selected + DDS Atlas** to create the Sollumz Drawable, DDS maps and optional Medium/Low LODs, just as with GLB imports.
 
-**OVL requires external Cobra Tools and Python 3.11 with Cobra's dependencies and texture converter.** Paths are detected where possible and can be set under **Advanced Paths**. The tested Planet Zoo 2 installation uses **Cobra Tools 2026.10.11 with local Planet Zoo 2 format-54 patches**; those external patches are **not bundled** in this release. An unmodified Cobra installation is not validated for Planet Zoo 2. GLB import, DDS merging and standalone backfaces do not require Cobra. See [OVL requirements](docs/INSTALLATION.md#ovl-requirements).
+**Version 2.7.1 bundles the patched Cobra decoder, texture converter, Pillow, imageio and bitarray.** Install only the add-on ZIP: no separate Cobra Tools, Python, pip or first-run downloads are required on **Windows x64 / Blender 5.2**. Extraction runs in Blender's own Python 3.13 as an isolated background process. See [OVL requirements](docs/INSTALLATION.md#ovl-requirements).
+
+For Oodle-compressed archives, the importer reads the **existing game's `oo2core_*_win64.dll`** from the game root/Win64 folders around `ovldata`. Keep archives in their installed game folders for automatic discovery. If an archive was copied elsewhere, choose the existing DLL under **Advanced Paths → Oodle Library**. This proprietary DLL and game assets are not redistributed.
 
 **Shared Textures OVL** and **Shared Texture Folder** can supply maps stored outside the selected archive. **Source Game** overrides automatic detection for moved archives. Missing or ambiguous required textures cancel import. Source archives remain unchanged.
 
-This release also fixes:
+The OVL importer includes these fixes:
 
 - **Fusilier fins:** preserve graded opacity rather than clipping fin membranes at 50%. Choose **Shader → Alpha** when merging translucent fins; Cutout applies a hard threshold.
 - **Common Sea Fan:** handle its separate vegetation bone block during static decoding and recognize `pOpacity` maps.
@@ -89,6 +98,8 @@ Report problems through [Issues](https://github.com/Exodus2597/material-combiner
 ## Credits and licensing
 
 Original author: **shotariya**. Upstream repository: **Grim-es/material-combiner-addon**. GTA edition maintained under **Exodus2597**.
+
+Bundled Cobra and dependency source/provenance/licenses are described in [vendor/README.md](vendor/README.md).
 
 The upstream [LICENSE](LICENSE) contains GPL-3.0. Some upstream source files also carry MIT notices; those notices and original copyright credits are retained. This repository preserves the upstream licensing materials. [Original upstream documentation](docs/UPSTREAM.md) is included for attribution and the legacy workflow.
 

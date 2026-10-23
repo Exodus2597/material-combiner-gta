@@ -1,12 +1,13 @@
-"""Cobra extraction worker. Runs in Cobra's external Python, never in Blender.
+"""Cobra extraction worker. Runs in an isolated Python process, never in Blender.
 
 Outputs a standard, self-contained GLB for the existing Blender import pipeline.
-Cobra Tools remains an external dependency; no Cobra sources or game assets are bundled.
+The release bundles patched Cobra sources and dependencies; no game assets are bundled.
 """
 
 import argparse
 import json
 import logging
+import os
 from pathlib import Path
 import struct
 import sys
@@ -380,7 +381,8 @@ def extract(args):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cobra", type=Path, required=True)
+    parser.add_argument("--cobra", type=Path)
+    parser.add_argument("--oodle-library", type=Path)
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--game", default="")
@@ -389,6 +391,14 @@ def main():
     parser.add_argument("--invert-green", action="store_true")
     args = parser.parse_args()
     try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from ovl_runtime import unpack_runtime, game_oodle_library
+        if args.cobra is None:
+            args.cobra = unpack_runtime(args.output / 'runtime')
+        library = game_oodle_library(args.source, args.oodle_library)
+        os.environ.pop('EXODUS_OVL_OODLE', None)
+        if library:
+            os.environ['EXODUS_OVL_OODLE'] = str(library)
         extract(args)
     except Exception as exc:
         args.output.mkdir(parents=True, exist_ok=True)

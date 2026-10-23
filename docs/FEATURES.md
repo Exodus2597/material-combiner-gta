@@ -4,7 +4,7 @@ The original Material Combiner PNG workflow remains available. This edition adds
 
 | Addition | Behavior |
 | --- | --- |
-| OVL import with textures | Use installed Cobra Tools and external Python 3.11 to decode highest-detail static meshes and FGM diffuse/normal/opacity references. Textures are packed, BC5 normals receive reconstructed Z, and selected meshes feed directly into DDS/Sollumz merging. Optional shared archives/PNG folders resolve external references. |
+| OVL import with textures | Use the bundled patched Cobra decoder and Blender's own Python 3.13 on Windows x64 to decode highest-detail static meshes and FGM diffuse/normal/opacity references. Textures are packed, BC5 normals receive reconstructed Z, and selected meshes feed directly into DDS/Sollumz merging. Optional shared archives/PNG folders resolve external references. No separate Cobra/Python install is needed; Oodle uses the existing game DLL automatically or through an optional override. |
 | GLB import with external textures | Blender's GLB importer loads geometry; material JSON or unambiguous name matching attaches diffuse and normal maps. Images can be packed into the blend. |
 | Optional import modifier removal | Remove All Modifiers defaults on and removes modifiers from newly imported objects without applying them. Groups/weights remain. Disable it to retain armature deformation. Existing scene objects are untouched. |
 | One merged mesh | All selected mesh objects become one output copy with one material and a Sollumz Drawable hierarchy. |
