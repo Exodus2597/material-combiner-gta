@@ -1,6 +1,6 @@
 # Exodus' Material Combiner
 
-A Blender add-on for importing textured OVL/GLB models and merging selected meshes into a readable texture atlas for **GTA V / Sollumz**.
+A Blender add-on for importing textured Arma P3D/PBO, OVL and GLB models and merging selected meshes into a readable texture atlas for **GTA V / Sollumz**.
 
 Modified edition of [Shotariya's Material Combiner](https://github.com/Grim-es/material-combiner-addon), based on upstream commit `eed9ca2`. Tested with **Blender 5.2.1 LTS and Sollumz 2.9.0**.
 
@@ -9,6 +9,7 @@ Modified edition of [Shotariya's Material Combiner](https://github.com/Grim-es/m
 ## What this edition adds
 
 - Import GLB models and attach external diffuse/normal textures through Unreal material JSON references or unambiguous name matching.
+- Import a loose Arma P3D or choose one from a PBO archive. The bundled Windows decoder brings the highest-detail visual mesh and its available diffuse and normal maps into the same DDS/Sollumz workflow.
 - Import OVL models with bundled, patched Cobra Tools, resolve diffuse/normal/opacity textures from FGM references, and use the same DDS/Sollumz merge workflow.
 - Optionally remove all imported modifiers, including Armature, using the default-on import toggle. Existing scene objects remain untouched.
 - Merge selected meshes into one Sollumz Drawable Model, one material and one `UVMap 0`.
@@ -25,12 +26,18 @@ The original PNG/PBR combining workflow remains available. See [added features a
 ## Quick start
 
 1. Enable Sollumz and disable previous Material Combiner editions.
-2. Download **`material_combiner_gta_2_7_1.zip`** from [Releases](https://github.com/Exodus2597/material-combiner-gta/releases/latest). Install it through **Edit → Preferences → Add-ons → Install from Disk** and enable **Exodus' Material Combiner**. Restart Blender if an older version remains loaded.
-3. Open **N → MatCombiner → Import GLB + Textures** to import a model and its maps, or select existing mesh objects in Object Mode.
+2. Download [`material_combiner_gta_2_8_0.zip`](https://github.com/Exodus2597/material-combiner-gta/releases/download/v2.8.0/material_combiner_gta_2_8_0.zip). Install it through **Edit → Preferences → Add-ons → Install from Disk** and enable **Exodus' Material Combiner**. Restart Blender if an older version remains loaded.
+3. Open **N → MatCombiner** and choose the import button for your file, or select existing mesh objects in Object Mode.
 4. Click **Merge Selected + DDS Atlas**, choose a new lowercase DDS filename and select sizes, formats, UV layout and shader.
 5. Export the resulting Drawable through Sollumz.
 
 DDS generation uses Blender's bundled NumPy. No external DDS converter is required for the GTA workflow.
+
+## New in 2.8.0 — Arma P3D and PBO
+
+Use **N → MatCombiner → Import Arma P3D / PBO**. A loose `.p3d` imports directly. A `.pbo` opens **Select a P3D Model**, listing model paths inside the archive; select a model and click **Import Model**.
+
+The importer packs available diffuse and normal maps into Blender and selects the result for **Merge Selected + DDS Atlas**. It supports Arma MLOD v257 and ODOL v73–75 through the bundled Windows x64 decoder. No separate Arma tools, Blender add-on or .NET install is required. Tested with the RATS backpack from RobTac, both loose and archived. See [Arma import usage](docs/USAGE.md#import-arma-p3d-or-pbo) and [bundled components](vendor/README.md#bundled-arma-decoder).
 
 ## New in 2.7.1
 

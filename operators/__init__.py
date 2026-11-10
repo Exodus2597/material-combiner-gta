@@ -7,7 +7,7 @@ This package contains all the operator classes that provide functionality for th
 - combine_list: UI-related operators for the material list.
 """
 
-from . import backfaces, browser, get_pillow, gta_atlas, import_glb, import_ovl
+from . import backfaces, browser, get_pillow, gta_atlas, import_arma, import_glb, import_ovl
 from .combiner import combiner
 from .ui import combine_list
 

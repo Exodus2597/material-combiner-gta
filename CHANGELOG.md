@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.8.0 — 2026-11-10
+
+- Add **Import Arma P3D / PBO**. Loose P3Ds import directly; PBOs open a second dialog listing internal P3D paths.
+- Import the highest-detail visual LOD of supported Arma MLOD and ODOL models, with UVs, normals, materials and available diffuse/normal maps. Select the result for DDS merging and Sollumz conversion.
+- Bundle the Windows x64 decoder, runtime, source and licenses. Arma files are read in a separate process with no additional installation.
+- Verify both entry paths on the RobTac RATS backpack, the real Blender archive dialog, a compressed PBO fixture and the DDS/Sollumz export workflow.
+
 ## 2.7.1 — 2026-10-23
 
 - Bundle the patched Cobra Tools 2026.10.11 static decoder, Planet Zoo 2 format-54 fixes, texconv and pinned Pillow/imageio/bitarray libraries for Windows x64 / CPython 3.13.

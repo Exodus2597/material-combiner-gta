@@ -18,3 +18,15 @@ The proprietary Oodle DLL is **not included**. The worker automatically locates 
 ## Rebuilding
 
 `tools/build_ovl_runtime.py --cobra /path/to/patched-cobra` builds a deterministic archive from the patched Cobra source tree, retaining source schemas and licensing. It downloads only the pinned official wheels, verifies their SHA256 hashes, applies the Oodle adapter/error changes and updates the archive manifest. No game DLL is packaged. To inspect, modify or rebuild the bundled Cobra version, extract `cobra/` from the archive and use it as that source tree. Review all dependency/provenance changes before replacing the manifest or archive.
+
+## Bundled Arma decoder
+
+`arma_bridge.exe` is the Windows x64 decoder for Arma import. It contains its own Microsoft .NET 10.0.14 runtime and uses the P3D/PAA readers from [UKSFTA-BIS](https://github.com/UKSFTA/UKSFTA-BIS/commit/17570f2296df6c4526e8769a02d6a76891c47c13). `arma_bridge_source.zip` contains the bridge, the pinned reader sources, the original MIT and GPL notices, and the Microsoft runtime notices. No game assets or proprietary game DLLs are included.
+
+To rebuild, extract the source ZIP and run this from its root with the .NET 10 SDK and the 10.0.14 runtime available on your build machine:
+
+```powershell
+dotnet publish ArmaBridge.csproj -c Release -r win-x64 --self-contained true -p:BisSource=upstream -p:RuntimeFrameworkVersion=10.0.14 -p:PublishTrimmed=true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none
+```
+
+The bridge processes selected models and texture references in an isolated process. It reads source archives without unpacking their directory tree; temporary decoder output is removed when Blender finishes importing.

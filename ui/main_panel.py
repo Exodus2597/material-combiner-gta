@@ -36,6 +36,7 @@ class MaterialCombinerPanel(bpy.types.Panel):
         gta.label(text="GTA V / Sollumz — Selected Meshes")
         gta.operator("smc.import_textured_glb", text="Import GLB + Textures", icon="IMPORT")
         gta.operator("smc.import_textured_ovl", text="Import OVL + Textures", icon="IMPORT")
+        gta.operator("smc.import_arma", text="Import Arma P3D / PBO", icon="IMPORT")
         gta.operator("smc.gta_atlas", text="Merge Selected + DDS Atlas", icon="EXPORT")
         gta.label(text="One UV map; originals retained.")
         if globs.pil_available:

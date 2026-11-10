@@ -1,5 +1,15 @@
 # Import and merge
 
+## Import Arma P3D or PBO
+
+1. In Object Mode, open **N → MatCombiner → Import Arma P3D / PBO**.
+2. Select a loose **.p3d** to import it directly. For a **.pbo**, select a model in the second dialog and click **Import Model**. The list shows full internal paths, including when two files share a filename.
+3. Switch to **Material Preview** to see the imported maps. The imported mesh is selected and ready for **Merge Selected + DDS Atlas** and the usual Sollumz workflow.
+
+The importer uses the highest-detail visual LOD and packs available PAA/PNG diffuse and normal maps. It checks the selected PBO for textures and materials. For a loose P3D, keep the unpacked texture and material paths beside the model, or set **Texture Folder** to the directory that contains those paths. Set that folder for a PBO when referenced textures have been unpacked separately. Missing or unsupported maps produce a warning and leave the mesh importable.
+
+Supports Arma MLOD v257 and ODOL v73–75 on Windows x64. Model import is static: Arma rigging, animations, proxy references, collision LODs, procedural textures and complete game shaders are outside this workflow. Source PBOs and P3Ds are read only.
+
 ## Misc. Tools — Create Backfaces
 
 1. In Object Mode, select the mesh objects to edit.
@@ -12,7 +22,7 @@ For Sollumz models, only the current/displayed LOD is edited. Switch LODs before
 
 ## Import OVL with textures
 
-1. Install **material_combiner_gta_2_7_1.zip** in Blender 5.2 on Windows x64. Cobra, its Planet Zoo 2 patches, texconv and required image libraries are bundled; Blender supplies Python 3.13/NumPy. No separate Cobra/Python install, pip command or first-run download is needed. See [installation requirements](INSTALLATION.md#ovl-requirements).
+1. Install the add-on ZIP in Blender 5.2 on Windows x64. Cobra, its Planet Zoo 2 patches, texconv and required image libraries are bundled; Blender supplies Python 3.13/NumPy. No separate Cobra/Python install, pip command or first-run download is needed. See [installation requirements](INSTALLATION.md#ovl-requirements).
 2. Open **N → MatCombiner → Import OVL + Textures** and select an `.ovl`. Leave matching `.ovs` and `.aux` files beside it. Source game files are read only; extraction uses a temporary folder.
 3. **Source Game → Automatic** uses Cobra detection, including the original Planet Zoo 2 folder path. Choose the game explicitly if you moved an archive out of its game directory.
 4. Leave **Shared Textures OVL** and **Shared Texture Folder** empty when all required textures are in the main archive. Otherwise select the second archive or a folder containing already extracted Cobra PNGs. FGM references choose the actual textures; ambiguous or missing required maps cancel import.

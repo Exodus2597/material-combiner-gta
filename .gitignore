@@ -105,3 +105,7 @@ venv.bak/
 # Material Combiner Addon Specific
 material-combiner-addon_updater/
 material_combiner_updater/
+
+# Arma bridge build intermediates
+tools/arma/bin/
+tools/arma/obj/
