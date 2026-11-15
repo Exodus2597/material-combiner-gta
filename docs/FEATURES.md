@@ -11,6 +11,7 @@ The original Material Combiner PNG workflow remains available. This edition adds
 | One merged mesh | All selected mesh objects become one output copy with one material and a Sollumz Drawable hierarchy. |
 | One UV map | Output retains exactly `UVMap 0`. Source UV layers remain intact. |
 | Readable material sheets | Whole original texture sheets move into atlas tiles through scale and translation. Original island arrangement is preserved, including unused texture areas and repeated UV ranges. |
+| Pack used UV islands | Repack the existing shapes by mesh surface area. Bake only the faces and their gutters instead of filling each original sheet. Small parts using large source textures no longer reserve whole tiles. |
 | Flexible rectangles | Weighted rectangular packing uses spare space more effectively. Textures and UVs resize together; tiny source textures use a small band. Original-aspect packing remains selectable. |
 | Diffuse DDS | Base color and opacity become one sRGB diffuse atlas. |
 | Separate normal DDS | Tangent normals become a Non-Color DirectX (-Y) atlas using the same normalized UV rectangles. Transform-sensitive normals rebake into the final tangent frame. |

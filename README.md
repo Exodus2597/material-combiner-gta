@@ -14,9 +14,11 @@ Modified edition of [Shotariya's Material Combiner](https://github.com/Grim-es/m
 - Optionally remove all imported modifiers, including Armature, using the default-on import toggle. Existing scene objects remain untouched.
 - Merge selected meshes into one Sollumz Drawable Model, one material and one `UVMap 0`.
 - Keep whole material texture sheets and their original UV island arrangement. Flexible rectangular packing uses spare atlas space more efficiently.
+- Use **Pack Used UV Islands** to bake only used UV regions and give larger mesh surfaces more atlas detail. Materials on a joined mesh can use different source UV layers.
 - Export separate diffuse/opacity and tangent-normal DDS files using the same UV layout.
 - Choose diffuse and normal resolutions independently, including **2048×2048 diffuse / 512×512 normals**.
 - Choose **A8R8G8B8** or **DXT5 (BC3)** independently for each atlas, with complete mipmaps.
+- Export smaller native **YDR, YDD and YFT** files with **Export Compact RAGE** for Legacy or Enhanced. Requires Sollumz with PyMateria.
 - Choose whether to keep vertex groups/rigging, set orange/black GTA vertex colors, and generate Medium/Low LODs with successive 0.6 Decimate ratios. All three toggles appear in the DDS save dialog and default off.
 - Add two-sided geometry during merging or separately through **Misc. Tools → Create Backfaces**, with an adjustable offset.
 - Validate unsupported inputs and restore scene state after failed imports or merges.
@@ -26,12 +28,16 @@ The original PNG/PBR combining workflow remains available. See [added features a
 ## Quick start
 
 1. Enable Sollumz and disable previous Material Combiner editions.
-2. Download [`material_combiner_gta_2_8_0.zip`](https://github.com/Exodus2597/material-combiner-gta/releases/download/v2.8.0/material_combiner_gta_2_8_0.zip). Install it through **Edit → Preferences → Add-ons → Install from Disk** and enable **Exodus' Material Combiner**. Restart Blender if an older version remains loaded.
+2. Download [`material_combiner_gta_2_8_4.zip`](https://github.com/Exodus2597/material-combiner-gta/releases/download/v2.8.4/material_combiner_gta_2_8_4.zip). Install it through **Edit → Preferences → Add-ons → Install from Disk** and enable **Exodus' Material Combiner**. Restart Blender if an older version remains loaded.
 3. Open **N → MatCombiner** and choose the import button for your file, or select existing mesh objects in Object Mode.
-4. Click **Merge Selected + DDS Atlas**, choose a new lowercase DDS filename and select sizes, formats, UV layout and shader.
-5. Export the resulting Drawable through Sollumz.
+4. Click **Merge Selected + DDS Atlas**, choose a lowercase DDS filename and select sizes, formats, UV layout and shader.
+5. Select the resulting Drawable or its mesh and use **Export Compact RAGE** in MatCombiner to write a native file. See [export options](docs/USAGE.md#export-compact-rage).
 
 DDS generation uses Blender's bundled NumPy. No external DDS converter is required for the GTA workflow.
+
+## New in 2.8.4
+
+Pack used UV islands, export smaller native RAGE files, and replace matching DDS or RAGE exports. See the [2.8.4 release notes](https://github.com/Exodus2597/material-combiner-gta/releases/tag/v2.8.4).
 
 ## New in 2.8.0 — Arma P3D and PBO
 
@@ -94,9 +100,9 @@ Generated LODs occupy the Medium and Low slots on the same Sollumz Drawable Mode
 
 The merge creates `name.dds`, optional `name_normal.dds`, and one merged model with one material and one UV map. Diffuse is sRGB with opacity in alpha; normals are Non-Color, DirectX (-Y), with opaque alpha. Both textures are marked embedded in the Sollumz material.
 
-**Merged output has no vertex groups or weights by default.** Enable Keep Vertex Groups to retain them in High and generated LODs. A compatible armature is copied; retargeting and new weighting are not performed. Source meshes, UVs, materials and weights remain unchanged. Existing output files are protected.
+**Merged output has no vertex groups or weights by default.** Enable Keep Vertex Groups to retain them in High and generated LODs. A compatible armature is copied; retargeting and new weighting are not performed. Source meshes, UVs, materials and weights remain unchanged.
 
-DXT5 is lossy. Specular, roughness, metallic, emission, shape keys, merging inputs with multiple populated LODs and specialized GTA shader behavior are outside this workflow. CodeWalker XML export has been tested; actual GTA V rendering and native binary YDR/YTD export have not been verified. See [validation](docs/VALIDATION.md).
+DXT5 is lossy. Specular, roughness, metallic, emission, shape keys, merging inputs with multiple populated LODs and specialized GTA shader behavior are outside this workflow. CodeWalker XML and native YDR, YDD and YFT exports were tested in Blender. Actual GTA V rendering has not been verified. See [validation](docs/VALIDATION.md).
 
 ## Development
 

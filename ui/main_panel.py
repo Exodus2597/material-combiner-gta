@@ -39,6 +39,7 @@ class MaterialCombinerPanel(bpy.types.Panel):
         gta.operator("smc.import_arma", text="Import Arma P3D / PBO", icon="IMPORT")
         gta.operator("smc.gta_atlas", text="Merge Selected + DDS Atlas", icon="EXPORT")
         gta.label(text="One UV map; originals retained.")
+        layout.operator("smc.export_compact_rage", icon="EXPORT")
         if globs.pil_available:
             layout.separator()
             self._render_main_interface(context, layout)

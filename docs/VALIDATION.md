@@ -4,6 +4,10 @@ Environment: Blender 5.2.1 LTS (`9e2066aef7ef`), Sollumz 2.9.0, its matching pur
 
 ## Passed
 
+- 2.8.4: native YDR, YDD and YFT replacement with Sollumz 2.9.0 and PyMateria 0.2.0. The benchmark YDD retained 26,825 triangles, three LODs, skin weights, materials and embedded textures in a 20.4% smaller Legacy export. DDS tests covered replacement of both atlases, diffuse-only replacement and restoration after an injected write failure.
+
+- 2.8.1 preview, Ready or Not commander vest: at 1024 diffuse / 512 normal, rasterized UV coverage rose from 26.9% with whole sheets to 55.8% with used-island packing. Armor coverage rose from 9.6% to 29.0%; flashbang coverage fell from 8.1% to 2.0%. Source UVs and face counts were unchanged, with no cross-material raster overlap in the packed UVs. Both DDS maps loaded and CodeWalker XML export passed. Synthetic checks cover island shape, separate stacked islands, repeated source coordinates, color and opacity, mirrored normal direction, and cleanup when a material has collapsed UVs.
+
 - Version 2.8.0: the actual Blender PBO model dialog lists all 10 RobTac P3Ds without changing the scene. Selecting RATS and importing the loose ODOL v73 file produce identical geometry and packed textures: one mesh, 14,288 triangles and two 2048×2048 images. UVs, custom normals, Z-up dimensions, missing-format errors, DDS atlases, Medium/Low LODs and CodeWalker XML export were checked. Generated MLOD/PBO fixtures cover visual LOD selection, duplicate filenames in distinct folders, LZSS-packed members and malformed archives without distributing any game assets. Existing Fusilier/Clownfish OVL and add-on registration checks pass.
 
 - Release 2.7.1: packaged OVL imports use Blender's own Python 3.13 and the bundled patched Cobra/texconv/image libraries. Fusilier imports with installed-Cobra discovery forbidden, PATH empty and invalid external PYTHONPATH/PYTHONHOME; no decoder/image modules enter Blender's process and the original game Oodle DLL remains byte-identical. A moved archive fails with an actionable Oodle error without changing scene data, then imports using the explicit game DLL override. Fusilier/Clownfish, Sea Fan, Anemone and both foliage fixtures pass texture/opacity/normal, DDS, LOD and CodeWalker XML checks. GLB import, standalone registration and merge-backface regression checks pass. Runtime tests reject hash/count/size mismatches, traversal/absolute/drive/backslash paths, symlinks, duplicate names and unsupported platforms before extraction.
@@ -90,7 +94,7 @@ CodeWalker source inspection confirms that its texture XML importer reads the DD
 
 - Supplied GLB and texture export were tested; GTA skeleton retargeting was not performed.
 - Actual GTA V rendering and CodeWalker application import were not run.
-- Native binary YDR/YTD export was not tested; CodeWalker XML export was tested.
+- Native YTD export is outside the compact export workflow.
 - DXT5 is lossy; visual quality depends on source detail and chosen resolution. Actual GTA V rendering of the new compressed output was not run. BC1/BC5 output is not offered.
 - Shape keys, multiple LODs and specialized GTA shaders are outside the supported merge scope.
 

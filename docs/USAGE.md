@@ -59,8 +59,11 @@ Unreal DirectX normals have their green channel flipped for Blender's Normal Map
 3. Choose an existing output folder and a new lowercase `.dds` filename, using letters, digits and underscores, for example `my_prop.dds`.
 4. Choose **Diffuse Size** and **Diffuse DDS Format**.
 5. Enable **Export Normal DDS**, then choose **Normal Size** and **Normal DDS Format**. These controls are independent of diffuse settings.
-6. Keep **UV Layout → Keep Material Texture Sheets** for a readable map. **Flexible Material Rectangles** fills spare space by resizing material sheets and their UVs together. Disable it to preserve original sheet aspect ratios. **Unwrap Geometry** uses Smart UV Project for fresh islands instead.
-7. Choose padding and a shader. Padding is measured in diffuse pixels; normal bake margins scale with normal resolution.
+6. Choose the UV layout:
+   - **Pack Used UV Islands** reclaims unused sheet space. It scales materials by mesh surface area, then moves and rotates their existing islands without stretching them. Choose this for large texture sheets that only a few faces use. Disconnected stacked islands are packed separately for correct baking.
+   - **Keep Material Texture Sheets** keeps each sheet and its island arrangement together for manual editing. **Flexible Material Rectangles** resizes sheets and UVs together to fill space. Turn it off to preserve whole-sheet aspect ratios.
+   - **Unwrap Geometry** creates new islands with Smart UV Project. Use it if existing UVs are collapsed or folded over each other.
+7. Choose a shader and padding. In **Pack Used UV Islands**, **Island Gutter** starts at 4 diffuse pixels. The layout can reserve a larger gap when the normal atlas is smaller. Increase the gutter if you see bleed at lower mip levels, or increase atlas resolution to retain detail on very small islands.
 8. Choose the optional mesh settings in the same DDS save dialog:
    - **Keep Vertex Groups (Rigging)** retains source group names and weights in the merged copy. Compatible rigged inputs retain a copied armature; no retargeting or new weighting is performed. Disabled by default, which removes all output groups and weights.
    - **Set GTA Vertex Colors** creates byte color layers **Color 1: #FF8000FF** (orange) and **Color 2: #00000000** (transparent black). Values use sRGB bytes, including green = 128. Disabled by default, which retains the previous white Color 1 output.
@@ -93,12 +96,18 @@ With full mipmaps, a 2048 atlas is about 21.3 MiB in A8R8G8B8 or 5.3 MiB in DXT5
 
 Normal export selects `normal.sps`, `normal_cutout.sps` or `normal_alpha.sps` for Opaque, Cutout or Alpha. Disabling normal export selects `default.sps`, `cutout.sps` or `alpha.sps`.
 
-Both atlases share normalized UV rectangles even when their resolutions differ. Keep Material Texture Sheets preserves existing overlaps within each material. If overlapping faces need different geometry-dependent shading, choose Unwrap Geometry to give them separate space. Repeated UVs outside 0..1 retain their tiled range in expanded rectangles.
+Both atlases share one normalized UV layout even when their resolutions differ. **Keep Material Texture Sheets** keeps existing overlaps within each material and expands the material rectangle for repeated UVs outside 0..1. **Pack Used UV Islands** resamples those same original coordinates into the new layout and leaves unused areas unbaked. Use **Unwrap Geometry** if a connected source island overlaps itself and needs unique pixels.
 
-Source models keep their geometry, UVs, materials and weights. **Hide Source Models** controls whether successful merges hide originals in this view layer and renders. Failures restore selection and remove temporary data; existing DDS files are protected. Blender Undo restores scene changes, but exported files remain on disk.
+Source models keep their geometry, UVs, materials and weights. **Hide Source Models** controls whether successful merges hide originals in this view layer and renders. A successful merge replaces matching diffuse and normal DDS files. Blender Undo restores scene changes only. Exported files remain on disk.
 
-## Export through Sollumz
+## Export Compact RAGE
 
-Select the new Drawable and export through Sollumz. CodeWalker XML export with both DDS references/files has been validated. This add-on does not automatically create YTD/YTYP files or install assets into GTA V.
+1. Enable **Sollumz with PyMateria**. Select a Drawable (YDR), Drawable Dictionary (YDD) or Fragment (YFT), or select a mesh inside one of those assets.
+2. In **N → MatCombiner**, click **Export Compact RAGE**. Choose **Legacy (Gen8)** or **Enhanced (Gen9)** and an existing output folder.
+3. Use the exported native files. Sollumz also writes any companion files it generates for the asset. A successful export replaces existing files with matching names.
+
+The export reuses Sollumz's settings for transforms, skeletons and mesh domain. It reduces float precision on ordinary exported geometry before vertex deduplication, and tests alternate triangle ordering for opaque and cutout materials. It preserves face counts and winding, vertex colors, skin weights and texture settings. Savings depend on the model and the proportion of the file occupied by textures. Use Sollumz's standard export for CodeWalker XML and other asset types.
+
+The vertex-buffer approach and cache ordering are adapted from [CRCK Workshop by productofmymind](https://github.com/productofmymind/CRCK-Workshop/blob/main/vehicle_hierarchy_tools/compactexport.py), licensed GPL-3.0-or-later.
 
 Enable **Keep Vertex Groups (Rigging)** to retain imported GLB weights in the merged model and generated LODs. GTA skeleton compatibility and retargeting remain separate steps. When this option is off, merged output starts without weights. Sollumz exports the vertex color channels used by the selected shader; both requested color layers remain available on the Blender meshes.

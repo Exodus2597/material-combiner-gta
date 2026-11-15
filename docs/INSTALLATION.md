@@ -3,7 +3,7 @@
 Tested configuration: **Blender 5.2.1 LTS, Sollumz 2.9.0, Windows**. Other Blender/Sollumz combinations have not been validated for the GTA workflow.
 
 1. Install and enable [Sollumz](https://github.com/Sollumz/Sollumz).
-2. Download [`material_combiner_gta_2_8_0.zip`](https://github.com/Exodus2597/material-combiner-gta/releases/download/v2.8.0/material_combiner_gta_2_8_0.zip) from the [2.8.0 release](https://github.com/Exodus2597/material-combiner-gta/releases/tag/v2.8.0). Use this installation ZIP in Blender.
+2. Download [`material_combiner_gta_2_8_4.zip`](https://github.com/Exodus2597/material-combiner-gta/releases/download/v2.8.4/material_combiner_gta_2_8_4.zip) from the [2.8.4 release](https://github.com/Exodus2597/material-combiner-gta/releases/tag/v2.8.4). Use this installation ZIP in Blender.
 3. Disable any previous Material Combiner installation. Different editions share operator names and must not run together.
 4. Open **Edit → Preferences → Add-ons → menu → Install from Disk** in Blender.
 5. Select the ZIP without extracting it and enable **Exodus' Material Combiner**.
@@ -48,7 +48,7 @@ Save your blend, disable the older GTA edition and install the new release ZIP. 
 | GTA buttons missing | Enable this edition; disable duplicate Material Combiner editions; reopen the viewport sidebar. |
 | Sollumz unavailable | Enable Sollumz 2.9.0 in the same Blender installation. |
 | Merge cancelled in Edit Mode | Return to Object Mode and select mesh objects. |
-| Output already exists | Choose a new lowercase filename containing letters, digits and underscores. Existing files are protected. |
+| Output file cannot be replaced | Close the file in any application that has it locked. Check that the output folder is writable. |
 | Textures not found on GLB import | Set Texture Export Folder to the export root; retain material JSON sidecars and their relative texture paths. |
 | Ambiguous texture match | Use an export with exact material JSON references or correct the material/texture names. |
 | Normal map looks inverted | Select the source normal convention on import. Unreal exports normally use DirectX; Blender materials use OpenGL (+Y). Output normals use GTA DirectX (-Y). |

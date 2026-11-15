@@ -31,7 +31,7 @@ bl_info = {
     "name": "Exodus' Material Combiner",
     "description": "Arma P3D/PBO, OVL and GLB import with DDS atlases for GTA V / Sollumz",
     "author": "Exodus (original by shotariya)",
-    "version": (2, 8, 0),
+    "version": (2, 8, 4),
     "blender": (5, 2, 0),
     "location": "View3D",
     "wiki_url": "https://github.com/Exodus2597/material-combiner-gta",

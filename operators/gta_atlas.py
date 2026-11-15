@@ -19,6 +19,8 @@ from bpy_extras.io_utils import ExportHelper
 
 from ..utils.dds import write_dds
 from ..utils.material_tiles import arrange_material_tiles, tile_proxy
+from ..utils.output_files import replace_outputs
+from ..utils.used_uvs import pack_used_uvs
 
 ATLAS_UV = "__smc_atlas"
 
@@ -26,10 +28,9 @@ ATLAS_UV = "__smc_atlas"
 def referenced_uvs(obj):
     render = next((u.name for u in obj.data.uv_layers if u.active_render),
                   obj.data.uv_layers.active.name)
-    names = {render}
     available = {u.name for u in obj.data.uv_layers}
-    visited = set()
-    def visit(tree):
+
+    def visit(tree, names, visited):
         if tree is None or tree in visited:
             return
         visited.add(tree)
@@ -39,14 +40,17 @@ def referenced_uvs(obj):
             if node.type == "ATTRIBUTE" and node.attribute_name in available:
                 names.add(node.attribute_name)
             if node.type == "GROUP":
-                visit(node.node_tree)
-    for slot in obj.material_slots:
-        if slot.material:
-            visit(slot.material.node_tree)
-    return names, render
+                visit(node.node_tree, names, visited)
+
+    sources = {}
+    for material in {slot.material for slot in obj.material_slots if slot.material}:
+        names = set()
+        visit(material.node_tree, names, set())
+        sources[material] = names
+    return sources, render
 
 
-def pin_source_uvs(tree, uv_name, groups, memo):
+def pin_source_uvs(tree, uv_name, groups, memo, tangent_uv):
     """Freeze implicit UV and tangent inputs before changing the baking UV."""
     uv_node = None
     def source_uv():
@@ -57,7 +61,7 @@ def pin_source_uvs(tree, uv_name, groups, memo):
         return uv_node.outputs[0]
     for node in list(tree.nodes):
         if node.type == "NORMAL_MAP" and node.space == "TANGENT" and not node.uv_map:
-            node.uv_map = uv_name
+            node.uv_map = tangent_uv
         elif node.type == "TEX_IMAGE" and not node.inputs["Vector"].is_linked:
             tree.links.new(source_uv(), node.inputs["Vector"])
         elif node.type == "TEX_COORD":
@@ -70,7 +74,7 @@ def pin_source_uvs(tree, uv_name, groups, memo):
                 copied.use_fake_user = False
                 memo[original] = copied
                 groups.append(copied)
-                pin_source_uvs(copied, uv_name, groups, memo)
+                pin_source_uvs(copied, uv_name, groups, memo, tangent_uv)
             node.node_tree = memo[original]
 
 
@@ -125,7 +129,8 @@ def validate_sources(context, objects):
             raise ValueError(f"{obj.name}: selected mesh must be visible")
         if not mesh.polygons or not mesh.uv_layers:
             raise ValueError(f"{obj.name}: mesh needs faces and source UVs")
-        required, _ = referenced_uvs(obj)
+        sources, render_uv = referenced_uvs(obj)
+        required = {render_uv}.union(*sources.values())
         missing = required.difference(mesh.uv_layers.keys())
         if missing:
             raise ValueError(f"{obj.name}: material references missing UV maps: {', '.join(sorted(missing))}")
@@ -406,9 +411,12 @@ class GTAAtlas(bpy.types.Operator, ExportHelper):
     diffuse_format: EnumProperty(name="Diffuse DDS Format", default="A8R8G8B8", items=DDS_FORMATS)
     normal_format: EnumProperty(name="Normal DDS Format", default="A8R8G8B8", items=DDS_FORMATS)
     padding: IntProperty(name="Padding (pixels)", default=16, min=4, max=64)
+    island_padding: IntProperty(name="Island Gutter (pixels)", default=4, min=2, max=32,
+                               description="Requested gap at diffuse resolution; a smaller normal map may need more room")
     uv_layout: EnumProperty(name="UV Layout", default="MATERIAL_TILES", items=[
         ("MATERIAL_TILES", "Keep Material Texture Sheets", "Keep original UV islands; resize and move whole material sheets"),
-        ("SMART_PROJECT", "Unwrap Geometry", "Create new UV islands using Smart UV Project")])
+        ("SMART_PROJECT", "Unwrap Geometry", "Create new UV islands using Smart UV Project"),
+        ("USED_ISLANDS", "Pack Used UV Islands", "Keep island shapes; give larger mesh surfaces more pixels and bake only UV-covered regions")])
     flexible_tiles: BoolProperty(name="Flexible Material Rectangles", default=True,
                                 description="Fill spare atlas space with rectangular sheets; UVs and textures resize together")
     shader: EnumProperty(name="GTA Shader", default="default.sps", items=[
@@ -443,7 +451,9 @@ class GTAAtlas(bpy.types.Operator, ExportHelper):
         layout.prop(self, "uv_layout")
         if self.uv_layout == "MATERIAL_TILES":
             layout.prop(self, "flexible_tiles")
-        layout.prop(self, "padding")
+        elif self.uv_layout == "USED_ISLANDS":
+            layout.label(text="Bakes only used UV regions, with padding around islands.")
+        layout.prop(self, "island_padding" if self.uv_layout == "USED_ISLANDS" else "padding")
         layout.prop(self, "shader")
         layout.prop(self, "hide_sources")
         layout.prop(self, "keep_vertex_groups")
@@ -469,7 +479,6 @@ class GTAAtlas(bpy.types.Operator, ExportHelper):
         drawable = None
         temp_path = None
         normal_temp_path = None
-        published = []
         success = False
         original_hiding = [(o, o.hide_get(), o.hide_render) for o in objects]
         engine = scene.render.engine
@@ -483,22 +492,21 @@ class GTAAtlas(bpy.types.Operator, ExportHelper):
             size = int(self.resolution)
             normal_size = size if self.normal_resolution == "SAME" else int(self.normal_resolution)
             world_size = max(size, normal_size) if self.export_normals else size
-            normal_margin = max(1, round(self.padding * normal_size / size / 2))
-            world_margin = max(1, round(self.padding * world_size / size / 2))
-            if self.padding * 4 >= size:
+            padding = self.island_padding if self.uv_layout == "USED_ISLANDS" else self.padding
+            diffuse_margin = max(1, padding // 2)
+            normal_margin = max(1, round(padding * normal_size / size / 2))
+            world_margin = max(1, round(padding * world_size / size / 2))
+            if padding * 4 >= size:
                 raise ValueError("Padding must be less than one quarter of atlas size")
-            path = Path(bpy.path.abspath(self.filepath)).resolve()
+            path = Path(bpy.path.abspath(self.filepath))
+            path = path.parent.resolve() / path.name
             if not self.filepath or path.suffix.lower() != ".dds" or not path.parent.is_dir():
                 raise ValueError("Choose a .dds file in an existing output folder")
-            if path.exists():
-                raise ValueError("Output already exists; choose a new filename to preserve existing textures")
             name = re.sub(r"[^a-z0-9_]+", "_", path.stem.lower()).strip("_")
             if not name or path.stem != name:
                 raise ValueError("Use a lowercase DDS filename containing only letters, digits and underscores")
             normal_path = path.with_name(name + "_normal.dds") if self.export_normals else None
-            if normal_path and normal_path.exists():
-                raise ValueError("Normal DDS already exists; choose a new filename")
-            # Reserve output before any expensive work. Final publication is atomic.
+            # Keep the staged DDS on the same volume as the final file.
             fd, temp_path = tempfile.mkstemp(suffix=".dds", dir=str(path.parent))
             os.close(fd)
             shader = {"default.sps": "normal.sps", "cutout.sps": "normal_cutout.sps",
@@ -509,6 +517,7 @@ class GTAAtlas(bpy.types.Operator, ExportHelper):
             if final_material.node_tree.nodes.get("DiffuseSampler") is None:
                 raise ValueError("Selected Sollumz shader has no DiffuseSampler")
             depsgraph = context.evaluated_depsgraph_get()
+            source_uvs = {}
             for original in objects:
                 obj = original.copy()
                 obj.data = original.data.copy()
@@ -544,15 +553,15 @@ class GTAAtlas(bpy.types.Operator, ExportHelper):
                         materials.append(copied)
                         slot.link = "DATA"
                         slot.material = copied
-                required, source_uv_name = referenced_uvs(obj)
+                sources, source_uv_name = referenced_uvs(obj)
+                source_uvs[obj] = (original.name, source_uv_name, sources)
+                required = {source_uv_name}.union(*sources.values())
                 if len(obj.data.uv_layers) >= 8:
                     for uv in list(obj.data.uv_layers):
                         if uv.name not in required:
                             obj.data.uv_layers.remove(uv)
                 if len(obj.data.uv_layers) >= 8:
                     raise ValueError(f"{original.name}: no free UV slot after modifiers")
-                for mat in {slot.material for slot in obj.material_slots if slot.material}:
-                    pin_source_uvs(mat.node_tree, source_uv_name, groups, {})
                 target = obj.data.uv_layers.new(name=ATLAS_UV)
                 obj.data.uv_layers.active = target
                 obj.data.uv_layers[source_uv_name].active_render = True
@@ -560,8 +569,16 @@ class GTAAtlas(bpy.types.Operator, ExportHelper):
                     if mod.type == "ARMATURE":
                         mod.show_viewport = mod.show_render = False
             tiles = []
+            tangent_uvs = {}
             if self.uv_layout == "MATERIAL_TILES":
                 tiles = arrange_material_tiles(copies, ATLAS_UV, size, self.padding, self.flexible_tiles)
+            elif self.uv_layout == "USED_ISLANDS":
+                select_only(context, copies)
+                # Leave room for both bakes' dilation even at unequal resolutions.
+                margin = max((diffuse_margin + 0.5) / size,
+                             (normal_margin + 0.5) / normal_size if self.export_normals else 0,
+                             (world_margin + 0.5) / world_size if self.export_normals else 0)
+                tangent_uvs = pack_used_uvs(context, copies, ATLAS_UV, margin, source_uvs)
             else:
                 select_only(context, copies)
                 bpy.ops.object.mode_set(mode="EDIT")
@@ -571,6 +588,9 @@ class GTAAtlas(bpy.types.Operator, ExportHelper):
                                          margin_method="ADD", rotate_method="AXIS_ALIGNED",
                                          area_weight=0.0, correct_aspect=False, scale_to_bounds=True)
                 bpy.ops.object.mode_set(mode="OBJECT")
+            for _, render_uv, sources in source_uvs.values():
+                for mat in sources:
+                    pin_source_uvs(mat.node_tree, render_uv, groups, {}, tangent_uvs.get(mat, render_uv))
             color_image = bpy.data.images.new(name + "_bake", width=size, height=size,
                                              alpha=True, float_buffer=True)
             opacity_image = bpy.data.images.new(name + "_opacity", width=size, height=size,
@@ -664,7 +684,7 @@ class GTAAtlas(bpy.types.Operator, ExportHelper):
                     result = bpy.ops.object.bake(type="EMIT", use_clear=False,
                                                 use_selected_to_active=False,
                                                 target="IMAGE_TEXTURES", save_mode="INTERNAL",
-                                                margin=max(1, self.padding // 2),
+                                                margin=diffuse_margin,
                                                 margin_type="EXTEND", uv_layer=ATLAS_UV)
                     if result != {"FINISHED"}:
                         raise RuntimeError(f"{obj.name}: texture bake failed")
@@ -804,19 +824,14 @@ class GTAAtlas(bpy.types.Operator, ExportHelper):
                 for source in objects:
                     source.hide_set(True)
                     source.hide_render = True
-            # Publish last. Windows rename and POSIX link refuse an existing target.
+            # Publish both atlases after building the drawable.
             atlas.filepath = str(path)
             if normal_atlas:
                 normal_atlas.filepath = str(normal_path)
-            for temporary, destination in ((normal_temp_path, normal_path), (temp_path, path)):
-                if temporary is None:
-                    continue
-                stat = os.stat(temporary)
-                if os.name == "nt":
-                    os.rename(temporary, destination)
-                else:
-                    os.link(temporary, destination)
-                published.append((destination, stat.st_dev, stat.st_ino))
+            outputs = [(temp_path, path)]
+            if normal_temp_path:
+                outputs.append((normal_temp_path, normal_path))
+            replace_outputs(outputs)
             success = True
             files = path.name + (f" + {normal_path.name}" if normal_path else "")
             self.report({"INFO"}, f"Merged {len(objects)} meshes; one UVMap 0 and {files}")
@@ -839,15 +854,6 @@ class GTAAtlas(bpy.types.Operator, ExportHelper):
                     except OSError as exc:
                         self.report({"WARNING"}, f"Could not remove temporary file {temporary}: {exc}")
             if not success:
-                for destination, device, inode in published:
-                    try:
-                        stat = destination.stat()
-                        if (stat.st_dev, stat.st_ino) == (device, inode):
-                            destination.unlink()
-                    except FileNotFoundError:
-                        pass
-                    except OSError as exc:
-                        self.report({"WARNING"}, f"Could not remove incomplete atlas {destination}: {exc}")
                 for obj in copies + ([drawable] if drawable else []):
                     if obj.name in bpy.data.objects:
                         bpy.data.objects.remove(obj, do_unlink=True)

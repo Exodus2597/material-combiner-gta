@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.8.4 — 2026-11-15
+
+- Allow **Export Compact RAGE** and **Merge Selected + DDS Atlas** to replace matching files. Failed multi-file replacements restore the previous outputs.
+
+## 2.8.3 — Local preview
+
+- Add **Export Compact RAGE** for selected Sollumz Drawables, Drawable Dictionaries and Fragments. Choose GTA V Legacy (Gen8) or Enhanced (Gen9).
+- Reduce native file size by rounding and deduplicating ordinary exported vertices and optimizing opaque and cutout triangle order. Uses Sollumz's native file writer and keeps source Blender data and DDS textures intact.
+
+## 2.8.2 — Local preview
+
+- Fix **Pack Used UV Islands** for joined meshes whose materials use different UV layers. If a material has no usable UVs, the error identifies the source object, material and UV layers checked.
+
+## 2.8.1 — Local preview
+
+- Add **Pack Used UV Islands**. Allocate atlas space by mesh surface area, move and rotate the existing UV islands, and bake only covered regions plus their gutters. Original meshes and UVs are unchanged.
+- Keep the whole-sheet layout for manual editing and **Unwrap Geometry** for fresh UVs. Diffuse and normal maps share the new layout, even at different resolutions.
+
 ## 2.8.0 — 2026-11-10
 
 - Add **Import Arma P3D / PBO**. Loose P3Ds import directly; PBOs open a second dialog listing internal P3D paths.

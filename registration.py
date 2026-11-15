@@ -34,6 +34,7 @@ __bl_classes = [
     operators.combine_list.SelectNoneMaterials,
     operators.combiner.Combiner,
     operators.gta_atlas.GTAAtlas,
+    operators.export_rage.ExportCompactRage,
     operators.backfaces.CreateBackfaces,
     operators.import_glb.ImportTexturedGLB,
     operators.import_ovl.ImportTexturedOVL,
